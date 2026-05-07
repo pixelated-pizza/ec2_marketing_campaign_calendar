@@ -1,0 +1,29 @@
+td.py-2 {
+    min-height: 2.5rem;
+}
+
+td.py-2 textarea,
+td.py-2 input {
+    height: 100%;
+}
+
+/* Alternating rows */
+:deep(.row-even td) {
+    background-color: #1e1e2e !important;
+}
+
+:deep(.row-odd td) {
+    background-color: #16161e !important;
+}
+
+/* Hover highlight */
+:deep(tr:hover td) {
+    background-color: #2a2a3d !important;
+    cursor: pointer;
+}
+
+/* Active cell edit highlight */
+:deep(.p-datatable-tbody > tr > td.p-cell-editing) {
+    background-color: #1a3a4a !important;
+    outline: 2px solid #3b82f6;
+}

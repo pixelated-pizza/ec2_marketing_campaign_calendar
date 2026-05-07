@@ -1,0 +1,23 @@
+
+.p-datatable .p-sortable-column.p-highlight[data-v-245c0d8b] {
+    background: rgba(59, 130, 246, 0.08) !important;
+}
+html.app-dark .p-datatable .p-sortable-column.p-highlight[data-v-245c0d8b] {
+    background: #1f2937 !important;
+    color: #e5e7eb !important;
+}
+html.app-dark .fc-datagrid-cell-main[data-v-245c0d8b]{
+    background: #1f2937 !important;
+    color: #e5e7eb !important;
+}
+html.app-dark .p-datatable .p-datatable-tbody > tr > td.p-highlight[data-v-245c0d8b] {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+}
+.p-datatable .p-sortable-column[data-v-245c0d8b],
+.p-datatable .p-sortable-column.p-highlight[data-v-245c0d8b] {
+    transition: background-color 0.15s ease;
+}
+.fc-datagrid-cell-main[data-v-245c0d8b]{
+    color: black !important;
+}

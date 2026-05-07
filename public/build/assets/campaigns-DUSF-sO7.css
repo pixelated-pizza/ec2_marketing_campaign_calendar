@@ -1,0 +1,54 @@
+.gantt-container {
+  width: 100%;
+  min-height: 500px;
+}
+
+/* ========== FORCE DARK MODE (STRONGER) ========== */
+.dark .gantt_container,
+.dark .gantt_layout_root,
+.dark .gantt_grid,
+.dark .gantt_grid_scale,
+.dark .gantt_grid_data,
+.dark .gantt_data_area,
+.dark .gantt_task_scale,
+.dark .gantt_task_bg,
+.dark .gantt_task,
+.dark .gantt_scale_line,
+.dark .gantt_task_cell,
+.dark .gantt_task_row,
+.dark .gantt_task_bg,
+.dark .gantt_task_content {
+  background: #111827 !important; /* gray-900 */
+  border-color: #374151 !important; /* gray-700 */
+}
+
+/* Grid headers */
+.dark .gantt_grid_head_cell,
+.dark .gantt_grid_scale {
+  background: #1f2937 !important; /* gray-800 */
+  color: #e5e7eb !important;
+}
+
+/* Text */
+.dark .gantt_tree_content,
+.dark .gantt_grid_head_text,
+.dark .gantt_task_content,
+.dark .gantt_scale_cell {
+  color: #e5e7eb !important;
+}
+
+/* Timeline background stripes */
+.dark .gantt_task_bg {
+  background: #111827 !important;
+}
+
+/* Today line */
+.dark .gantt_today_line {
+  background: #60a5fa !important; /* blue-400 */
+}
+
+/* Lightbox (popup) */
+.dark .gantt_lightbox {
+  background: #111827 !important;
+  color: #e5e7eb !important;
+}

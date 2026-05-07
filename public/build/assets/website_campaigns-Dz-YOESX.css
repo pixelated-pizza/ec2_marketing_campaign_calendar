@@ -1,0 +1,40 @@
+.p-datatable .p-sortable-column.p-highlight {
+    background: rgba(59, 130, 246, 0.08) !important;
+}
+
+html.app-dark .p-datatable .p-sortable-column.p-highlight {
+    background: #1f2937 !important;
+    color: #e5e7eb !important;
+}
+
+html.app-dark .p-datatable .p-datatable-tbody > tr > td.p-highlight {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+}
+
+.p-datatable .p-sortable-column,
+.p-datatable .p-sortable-column.p-highlight {
+    transition: background-color 0.15s ease;
+}
+
+html:not(.app-dark) .fc .fc-datagrid-header-cell,
+html:not(.app-dark) .fc .fc-datagrid-cell-main {
+    color: black !important;
+}
+
+/* Optional: dark mode overrides (you already have some) */
+html.app-dark .fc .fc-datagrid-header-cell,
+html.app-dark .fc .fc-datagrid-cell-main {
+    color: #e5e7eb !important; /* light gray for dark mode */
+}
+
+html:not(.app-dark) .fc .fc-datagrid-header-cell,
+html:not(.app-dark) .fc .fc-datagrid-cell-main {
+    color: black !important;
+}
+
+/* Optional: dark mode overrides (you already have some) */
+html.app-dark .fc .fc-datagrid-header-cell,
+html.app-dark .fc .fc-datagrid-cell-main {
+    color: #e5e7eb !important; /* light gray for dark mode */
+}

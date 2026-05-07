@@ -1,0 +1,327 @@
+@import 'tailwindcss';
+@import 'primeicons/primeicons.css';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+}
+
+html, body {
+  margin: 0;          
+  padding: 0;         
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+[v-cloak] {
+  display: none;
+}
+
+.app-dark .p-datatable .p-sortable-column.p-highlight {
+  background: #22c55e !important; 
+}
+
+.app-dark .p-datatable .p-sortable-column.p-highlight .p-column-title {
+  color: black !important;
+}
+
+.fc-theme {
+  --fc-border-color: #e5e7eb;          /* gray-200 */
+  --fc-page-bg-color: #ffffff;
+  --fc-neutral-bg-color: #f3f4f6;      /* gray-100 */
+  --fc-neutral-text-color: #111827;    /* gray-900 */
+
+  --fc-button-bg-color: #e5e7eb;       /* gray-200 */
+  --fc-button-border-color: #d1d5db;   /* gray-300 */
+  --fc-button-text-color: #111827;
+  --fc-button-hover-bg-color: #d1d5db;
+
+  --fc-today-bg-color: rgba(29, 78, 216, 0.08);
+
+  font-family: "Inter", sans-serif;
+  border-radius: 0.75rem;
+}
+
+/* =========================
+   DARK MODE OVERRIDES
+   (applies when .app-dark or .dark exists)
+   ========================= */
+:deep(.app-dark) .fc-theme,
+:deep(.dark) .fc-theme {
+  --fc-border-color: #2f3542;
+  --fc-page-bg-color: #111827;      /* gray-900 */
+  --fc-neutral-bg-color: #0f172a;   /* slate-900 */
+  --fc-neutral-text-color: #e5e7eb; /* gray-200 */
+
+  --fc-button-bg-color: #1f2937;    /* gray-800 */
+  --fc-button-border-color: #374151;
+  --fc-button-text-color: #f9fafb;
+  --fc-button-hover-bg-color: #374151;
+
+  --fc-today-bg-color: rgba(29, 78, 216, 0.15);
+}
+
+/* ===== TOOLBAR TITLE ===== */
+:deep(.fc-toolbar-title) {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* Light title */
+:deep(.fc-theme .fc-toolbar-title) {
+  color: #111827 !important;
+}
+
+/* Dark title */
+:deep(.app-dark .fc-theme .fc-toolbar-title),
+:deep(.dark .fc-theme .fc-toolbar-title) {
+  color: #f9fafb !important;
+}
+
+/* ===== RESOURCE / GANTT AREA ===== */
+:deep(.fc-datagrid-cell-main) {
+  font-weight: 500;
+}
+
+/* Light mode resource cells */
+:deep(.fc-theme .fc-datagrid-cell) {
+  background: #f9fafb !important;
+}
+
+/* Dark mode resource cells */
+:deep(.app-dark .fc-theme .fc-datagrid-cell),
+:deep(.dark .fc-theme .fc-datagrid-cell) {
+  background: #0f172a !important;
+}
+
+/* ===== SLOTS / TIMELINE BACKGROUND ===== */
+:deep(.fc-timeline-slot-frame) {
+  border-color: #e5e7eb !important;
+}
+
+:deep(.app-dark .fc-timeline-slot-frame),
+:deep(.dark .fc-timeline-slot-frame) {
+  border-color: #1f2937 !important;
+}
+
+/* ===== TODAY COLUMN ===== */
+:deep(.fc-today) {
+  background: var(--fc-today-bg-color) !important;
+}
+
+/* ===== EVENTS ===== */
+:deep(.fc-event) {
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  padding: 2px 4px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Dark mode event border */
+:deep(.app-dark .fc-event),
+:deep(.dark .fc-event) {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Event text */
+:deep(.fc-event-title) {
+  font-size: 11px !important;
+  color: white !important;
+}
+
+/* ===== BUTTONS ===== */
+:deep(.fc-button) {
+  border-radius: 6px !important;
+}
+
+/* Light mode buttons */
+:deep(.fc-theme .fc-button) {
+  background: #e5e7eb !important;
+  color: #111827 !important;
+}
+
+/* Dark mode buttons */
+:deep(.app-dark .fc-theme .fc-button),
+:deep(.dark .fc-theme .fc-button) {
+  background: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+:deep(.fc-theme .fc-button-primary) {
+  background-color: #e5e7eb !important; /* gray-200 */
+  border-color: #d1d5db !important;     /* gray-300 */
+  color: #111827 !important;            /* gray-900 */
+}
+
+/* ===== REMOVE WHITE FLASH IN DARK ===== */
+:deep(.app-dark .fc),
+:deep(.dark .fc) {
+  background: #111827 !important;
+}
+
+/* ===== FIX: Active view button in LIGHT mode (your issue) ===== */
+:deep(.fc-theme .fc-button-primary:not(:disabled).fc-button-active),
+:deep(.fc-theme .fc-button-primary:not(:disabled):active) {
+  background-color: #e5e7eb !important; /* gray-200 */
+  border-color: #d1d5db !important;     /* gray-300 */
+  color: #111827 !important;            /* gray-900 */
+}
+
+:deep(.app-dark .fc-theme .fc-button-primary:not(:disabled).fc-button-active),
+:deep(.app-dark .fc-theme .fc-button-primary:not(:disabled):active),
+:deep(.dark .fc-theme .fc-button-primary:not(:disabled).fc-button-active),
+:deep(.dark .fc-theme .fc-button-primary:not(:disabled):active) {
+  background-color: #1f2937 !important; 
+  border-color: #374151 !important;     
+  color: #f9fafb !important;           
+}
+
+:deep(.fc-theme .fc-button-primary:hover) {
+  background-color: #d1d5db !important; 
+  color: #111827 !important;
+}
+
+:deep(.app-dark .fc-theme .fc-button-primary:hover),
+:deep(.dark .fc-theme .fc-button-primary:hover) {
+  background-color: #374151 !important;
+  color: #f9fafb !important;
+}
+
+:deep(.fc-theme .fc-toolbar-chunk .fc-button) {
+  color: #111827 !important; 
+}
+
+:deep(.app-dark .fc-theme .fc-toolbar-chunk .fc-button),
+:deep(.dark .fc-theme .fc-toolbar-chunk .fc-button) {
+  color: #f9fafb !important; 
+}
+
+:deep(.fc-theme .fc-toolbar-chunk .fc-button) {
+  background-color: #e5e7eb !important; 
+  border-color: #d1d5db !important;
+}
+
+:deep(.app-dark .fc-theme .fc-toolbar-chunk .fc-button),
+:deep(.dark .fc-theme .fc-toolbar-chunk .fc-button) {
+  background-color: #1f2937 !important; 
+  border-color: #374151 !important;
+}
+
+/* Light mode - soft blue */
+.p-datatable .p-sortable-column.p-highlight {
+  background: rgba(59, 130, 246, 0.08) !important;
+}
+
+/* Dark mode - soft dark */
+html.app-dark .p-datatable .p-sortable-column.p-highlight {
+  background: #1f2937 !important; /* gray-800 */
+}
+
+/* Body cells too */
+html.app-dark .p-datatable .p-datatable-tbody > tr > td.p-highlight {
+  background: #111827 !important; /* gray-900 */
+}
+
+
+.ecommerce-world {
+    position: relative;
+    width: 250px;
+    height: 250px;
+    animation: rotateWorld 20s linear infinite;
+}
+
+.globe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #4ade80, #1e3a8a 70%);
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.6);
+}
+
+.float-icon {
+    position: absolute;
+    font-size: 1.5rem;
+    color: #3b82f6;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+    animation: floatIcons 6s ease-in-out infinite;
+}
+
+.float-icon[style*="--i:1"] {
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation-delay: 0s;
+}
+
+.float-icon[style*="--i:2"] {
+    bottom: -10px;
+    left: 20%;
+    animation-delay: 1.5s;
+}
+
+.float-icon[style*="--i:3"] {
+    right: -10px;
+    top: 40%;
+    animation-delay: 3s;
+}
+
+.float-icon[style*="--i:4"] {
+    top: 10%;
+    left: 10%;
+    animation-delay: 2s;
+}
+
+.float-icon[style*="--i:5"] {
+    bottom: 15%;
+    right: 25%;
+    animation-delay: 4.5s;
+}
+
+@keyframes spinGlobe {
+    0% {
+        transform: rotateY(0deg);
+    }
+
+    100% {
+        transform: rotateY(360deg);
+    }
+}
+
+@keyframes rotateWorld {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes floatIcons {
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: translateY(-10px) scale(1.1);
+        opacity: 0.8;
+    }
+}
