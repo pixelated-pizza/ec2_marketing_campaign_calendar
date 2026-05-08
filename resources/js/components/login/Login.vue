@@ -15,9 +15,6 @@
                 <h1 class="text-5xl font-extrabold tracking-tight text-white mb-4">
                     MillsBrands&copy;
                 </h1>
-                <p class="text-indigo-100 text-lg font-light max-w-sm mx-auto">
-                    The world of seamless eCommerce, managed in one powerful calendar.
-                </p>
             </div>
         </div>
 
