@@ -5,7 +5,7 @@
             <div class="p-4 flex items-center border-b border-gray-700">
                 <div class="flex-1 flex justify-center">
                     <img
-                        :src="'/app_icon.png'"
+                        :src="`${import.meta.env.VITE_BASE_URL}/favicon.ico`"
                         alt="MarketMap"
                         class="w-24 h-24 rounded-full"
                     />

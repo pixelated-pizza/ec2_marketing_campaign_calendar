@@ -22,7 +22,7 @@ function getLanIp() {
 const lanIp = getLanIp();
 
 export default defineConfig({
-    base: "/",
+    base: process.env.VITE_BASE_URL ? process.env.VITE_BASE_URL + "/" : "/",
     server: {
         host: "0.0.0.0",      // bind to all network interfaces
         cors: true,  
@@ -45,6 +45,7 @@ export default defineConfig({
                 "resources/css/external_promos.css",
                 "resources/css/website_campaigns.css",
             ],
+            assetUrl: process.env.VITE_ASSET_URL || "",
             refresh: true,
         }),
         tailwindcss(),
@@ -68,44 +69,6 @@ export default defineConfig({
     emptyOutDir: true,
     chunkSizeWarningLimit: 1500,
     cssMinify: false,
-    rollupOptions: {
-        output: {
-            manualChunks(id) {
-                // Split each PrimeVue component into its own chunk
-                if (id.includes('node_modules/primevue')) {
-                    return 'vendor-primevue';
-                }
-                if (id.includes('node_modules/@primevue')) {
-                    return 'vendor-primevue';
-                }
-                if (id.includes('node_modules/primeicons')) {
-                    return 'vendor-primeicons';
-                }
-                if (id.includes('node_modules/vue-router')) {
-                    return 'vendor-vue-router';
-                }
-                if (id.includes('node_modules/vue') || id.includes('node_modules/@vue')) {
-                    return 'vendor-vue';
-                }
-                if (id.includes('node_modules/pinia')) {
-                    return 'vendor-pinia';
-                }
-                if (id.includes('node_modules/axios')) {
-                    return 'vendor-axios';
-                }
-                if (id.includes('node_modules/firebase')) {
-                    return 'vendor-firebase';
-                }
-                if (id.includes('node_modules/@fullcalendar')) {
-                    return 'vendor-fullcalendar';
-                }
-                // Everything else in node_modules goes to vendor
-                if (id.includes('node_modules')) {
-                    return 'vendor-misc';
-                }
-            },
-        },
-    },
 },
     css: {
         preprocessorOptions: {

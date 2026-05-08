@@ -24,7 +24,7 @@
         <div class="flex w-full lg:w-1/2 items-center justify-center p-8 bg-white dark:bg-gray-900 transition-colors duration-300">
             <div class="w-full max-w-md space-y-8">
                 <div class="text-center">
-                    <img :src="'/app_icon.png'" alt="Logo" class="w-20 h-20 mx-auto mb-6 rounded-2xl shadow-lg" />
+                    <img :src="`${import.meta.env.VITE_BASE_URL}/app_icon.png`" alt="Logo" class="w-20 h-20 mx-auto mb-6 rounded-2xl shadow-lg" />
                     <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Welcome back</h2>
                     <p class="text-gray-500 dark:text-gray-400 mt-2">Marketing Campaign Calendar</p>
                 </div>
