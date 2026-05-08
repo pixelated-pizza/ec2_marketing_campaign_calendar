@@ -21,10 +21,8 @@ function getLanIp() {
 
 const lanIp = getLanIp();
 
-export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, process.cwd(), '');
-    return {
-    base: env.VITE_BASE_URL ? env.VITE_BASE_URL + "/" : "/",
+export default defineConfig({
+    base: "http://3.27.31.238/markmap/",
     server: {
         host: "0.0.0.0",      // bind to all network interfaces
         cors: true,  
@@ -47,7 +45,7 @@ export default defineConfig(({ mode }) => {
                 "resources/css/external_promos.css",
                 "resources/css/website_campaigns.css",
             ],
-            assetUrl: env.VITE_ASSET_URL || "",
+            assetUrl: "http://3.27.31.238/markmap/",
             refresh: true,
         }),
         tailwindcss(),
@@ -79,5 +77,4 @@ export default defineConfig(({ mode }) => {
             },
         },
     },
-    };
 });
