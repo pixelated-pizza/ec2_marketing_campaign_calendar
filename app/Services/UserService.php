@@ -68,7 +68,7 @@ class UserService
             ]);
         }
 
-        $defaultRoleId = DB::table('roles')->where('role_name', 'Viewer')->value('role_id');
+        $defaultRoleId = DB::table('roles')->where('role_name', 'Editor')->value('role_id');
 
         $user = User::firstOrCreate(
             ['firebase_uid' => $payload['uid']],
