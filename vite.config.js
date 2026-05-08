@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import laravel from "laravel-vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import vue from "@vitejs/plugin-vue";
@@ -22,7 +22,7 @@ function getLanIp() {
 const lanIp = getLanIp();
 
 export default defineConfig({
-    base: process.env.VITE_BASE_URL ? process.env.VITE_BASE_URL + "/" : "/",
+    base: env.VITE_BASE_URL ? env.VITE_BASE_URL + "/" : "/",
     server: {
         host: "0.0.0.0",      // bind to all network interfaces
         cors: true,  
@@ -45,7 +45,7 @@ export default defineConfig({
                 "resources/css/external_promos.css",
                 "resources/css/website_campaigns.css",
             ],
-            assetUrl: process.env.VITE_ASSET_URL || "",
+            assetUrl: env.VITE_ASSET_URL || "",
             refresh: true,
         }),
         tailwindcss(),
