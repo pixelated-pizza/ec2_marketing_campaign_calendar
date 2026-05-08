@@ -14,7 +14,7 @@ class SuperAdminAccount extends Seeder
      */
     public function run(): void
     {
-         $editor_id = Roles::get()->where('role_name', 'Admin')->value('role_id');
+         $editor_id = Roles::get()->where('role_name', 'Administrator')->value('role_id');
 
          DB::table('users')->insert([
             'name' => 'ESS Super Admin',
