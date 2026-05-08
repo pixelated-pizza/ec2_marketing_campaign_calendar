@@ -48,7 +48,7 @@ const routes = [
     },
 ];
 
-const router = createRouter({ history: createWebHistory(), routes });
+const router = createRouter({ history: createWebHistory('/markmap/'), routes });
 
 let initialNavDone = false;
 
