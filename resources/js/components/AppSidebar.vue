@@ -5,7 +5,7 @@
             <div class="p-4 flex items-center border-b border-gray-700">
                 <div class="flex-1 flex justify-center">
                     <img
-                        :src="`${import.meta.env.VITE_BASE_URL}/favicon.ico`"
+                        :src="faviconUrl"
                         alt="MarketMap"
                         class="w-24 h-24 rounded-full"
                     />
@@ -79,7 +79,7 @@ const userStore = useUserStore();
 const ui = useUIStore();
 
 const userName = computed(() => userStore.name);
-
+const faviconUrl = `${import.meta.env.VITE_BASE_URL || ''}/favicon.ico`;
 const showLogoutDialog = ref(false);
 const loggingOut = ref(false);
 
