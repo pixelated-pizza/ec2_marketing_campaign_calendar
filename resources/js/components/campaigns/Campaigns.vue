@@ -41,7 +41,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
 
-let gantt = null;
+let gantt = window.gantt;
 
 import Select from "primevue/select";
 import InputText from "primevue/inputtext";
