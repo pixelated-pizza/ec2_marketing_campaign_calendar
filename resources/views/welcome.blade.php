@@ -4,21 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MarketMap</title>
-    <link rel="icon" type="image/x-icon" href="/markmap/favicon.ico">
-    <link rel="stylesheet" href="/markmap/primeicons.css">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="stylesheet" href="{{ asset('primeicons.css') }}">
     @vite(['resources/css/app.css','resources/css/campaign_chart.css',
     'resources/css/internal_promos.css','resources/css/external_promos.css',
     'resources/css/website_campaigns.css','resources/css/mainlayout.css',
     'resources/css/dashboard.css','resources/css/wsd.css'])
-    <link rel="stylesheet" href="/markmap/vendor/gantt/dhtmlxgantt.css">
-    <script src="/markmap/vendor/gantt/dhtmlxgantt.js"></script>
+    <link rel="stylesheet" href="{{ asset('vendor/gantt/dhtmlxgantt.css') }}">
+    <script src="{{ asset('vendor/gantt/dhtmlxgantt.js') }}"></script>
 </head>
-
 <body class="">
-
     <div id="app"></div>
-
     @vite('resources/js/app.js')
 </body>
-
 </html>
