@@ -137,7 +137,7 @@ async function initGantt() {
                 task.type === "project" ? "<div class='add_child'>+</div>" : "",
         },
     ];
-
+    gantt.config.date_format = "%Y-%m-%d %H:%i";
     gantt.config.xml_date = "%Y-%m-%d %H:%i";
     gantt.config.drag_move = true;
     gantt.config.drag_resize = true;
@@ -231,6 +231,25 @@ async function initGantt() {
         }
     });
 
+    gantt.attachEvent("onAfterTaskDelete", async (id, task) => {
+        ui.showLoader();
+        if (newTasks.has(id)) {
+            newTasks.delete(id);
+            return;
+        }
+        if (task.type !== "project") {
+            try {
+                await deleteCampaign(id);
+                toastr.success("Campaign deleted successfully.");
+                ui.hideLoader();
+            } catch (err) {
+                console.error("Failed to delete campaign:", err);
+                toastr.error("Failed to delete campaign.");
+                ui.hideLoader();
+            }
+        }
+    });
+
     gantt.attachEvent("onBeforeTaskDelete", function (id, task) {
         if (task.type === "project" && !task.$virtual) {
             toastr.warning("Channels cannot be deleted.");
@@ -318,9 +337,11 @@ function autoAdjustTimeline(filteredTasks = []) {
     let maxDate = null;
 
     filteredTasks.forEach((task) => {
+        // ✅ Skip tasks without valid dates
         if (!task.start_date || !task.end_date) return;
         const start = new Date(task.start_date);
         const end = new Date(task.end_date);
+        if (isNaN(start) || isNaN(end)) return; // ✅ Skip invalid dates
 
         if (!minDate || start < minDate) minDate = start;
         if (!maxDate || end > maxDate) maxDate = end;
@@ -364,11 +385,9 @@ function renderFilteredCampaigns() {
         return a.name.localeCompare(b.name);
     });
 
-    // ALWAYS create project rows for channels
     sortedChannels.forEach((c) => {
         const parentId = `channel_${c.channel_id}`;
         channelMap[c.channel_id] = parentId;
-
         data.push({
             id: parentId,
             text: c.name,
@@ -376,12 +395,14 @@ function renderFilteredCampaigns() {
             type: "project",
             open: true,
             hide_bar: true,
+            // ✅ Give project rows explicit valid dates
+            start_date: new Date(),
+            end_date: new Date(new Date().getTime() + 86400000),
         });
     });
 
     const [startFilter, endFilter] = dateRange.value || [];
 
-    // Only add tasks if campaigns exist
     const filtered = allCampaigns.filter((c) => {
         const matchChannel = selectedChannel.value
             ? c.channel_id === selectedChannel.value
@@ -395,24 +416,26 @@ function renderFilteredCampaigns() {
 
         let matchDate = true;
         if (startFilter && endFilter) {
-            matchDate =
-                campaignEnd >= startFilter && campaignStart <= endFilter;
+            matchDate = campaignEnd >= startFilter && campaignStart <= endFilter;
         }
 
         return matchChannel && matchSearch && matchDate;
     });
 
-    // Add campaign tasks (if any)
     sortedChannels.forEach((c) => {
-        const channelTasks = filtered.filter(
-            (f) => f.channel_id === c.channel_id,
-        );
+        const channelTasks = filtered.filter((f) => f.channel_id === c.channel_id);
         channelTasks.forEach((campaign) => {
+            // ✅ Ensure dates are always valid Date objects
+            const startDate = campaign.start_date ? new Date(campaign.start_date) : new Date();
+            const endDate = campaign.end_date ? new Date(campaign.end_date) : new Date(startDate.getTime() + 86400000);
+
+            if (isNaN(startDate) || isNaN(endDate)) return; // ✅ Skip bad data
+
             data.push({
                 id: campaign.campaign_id,
                 text: campaign.name,
-                start_date: new Date(campaign.start_date),
-                end_date: parseEndDate(campaign.end_date),
+                start_date: startDate,
+                end_date: endDate,
                 channel_id: campaign.channel_id,
                 color: campaign.background_color,
                 parent: channelMap[campaign.channel_id],
@@ -446,24 +469,6 @@ function applyHiddenCampaigns() {
     });
 }
 
-gantt.attachEvent("onAfterTaskDelete", async (id, task) => {
-    ui.showLoader();
-    if (newTasks.has(id)) {
-        newTasks.delete(id);
-        return;
-    }
-    if (task.type !== "project") {
-        try {
-            await deleteCampaign(id);
-            toastr.success("Campaign deleted successfully.");
-            ui.hideLoader();
-        } catch (err) {
-            console.error("Failed to delete campaign:", err);
-            toastr.error("Failed to delete campaign.");
-            ui.hideLoader();
-        }
-    }
-});
 
 watch([searchTerm, selectedChannel, dateRange], () => {
     renderFilteredCampaigns();
@@ -519,7 +524,6 @@ onMounted(async () => {
         setTimeout(async () => {
             try {
                 channels.value = await fetchChannels();
-
                 darkObserver = watchDarkMode();
 
                 if (!ganttContainer.value) {
@@ -528,9 +532,16 @@ onMounted(async () => {
                     return;
                 }
 
+                // ✅ initGantt FIRST, then load data
+                await initGantt();
                 await loadCampaigns();
 
-                resizeObserver = new ResizeObserver(() => gantt.setSizes());
+                let resizeTimeout;
+                resizeObserver = new ResizeObserver(() => {
+                    if (!ganttInitialized) return;
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(() => gantt.setSizes(), 100);
+                });
                 resizeObserver.observe(ganttContainer.value);
             } catch (err) {
                 console.error("Error initializing gantt:", err);
@@ -555,9 +566,6 @@ onBeforeUnmount(() => {
     }
 });
 
-requestIdleCallback(async () => {
-    initGantt();
-});
 </script>
 
 <style>
