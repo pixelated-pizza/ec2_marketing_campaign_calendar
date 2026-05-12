@@ -8,7 +8,7 @@
             <Button label="Clear All" icon="pi pi-trash" severity="danger" @click="clearAllDialogVisible = true" />
         </div>
 
-        <div class="card">
+        <div>
             <div class="items-center">
                 <h2 class="text-white dark:text-white text-center font-bold text-lg tracking-wide">
                     Price & Inventory Tracking
@@ -19,7 +19,7 @@
             </span>
 
             <DataTable :value="sortedFeaturedSkus" :rowClass="stockRowClass" :loading="store.isLoading" editMode="cell"
-                @cell-edit-complete="onCellEdit" scrollable showGridlines scrollDirection="both"
+                @cell-edit-complete="onCellEdit" scrollable showGridlines scrollDirection="both" scrollHeight="650px"
                 style="min-width: 100%">
                 <template #empty>No featured SKUs found.</template>
 
@@ -38,7 +38,7 @@
                     <template #body="{ data }">{{
                         data.special_price
                             ? formatPrice(data.special_price)
-                            : "—"
+                            : ""
                     }}</template>
                 </Column>
                 <Column field="price_change" header="Price Change" style="min-width: 130px">
@@ -50,7 +50,7 @@
                             {{ data.price_change > 0 ? "+" : ""
                             }}{{ formatPrice(data.price_change) }}
                         </span>
-                        <span v-else class="text-gray-400">—</span>
+                        <span v-else class="text-gray-400"></span>
                     </template>
                 </Column>
                 <Column field="qty" :header="`SOH as of ${today}`" style="min-width: 150px">
@@ -65,7 +65,7 @@
                         <span v-if="getStockDeducted(data) > 0" class="text-red-500 font-medium">
                             −{{ getStockDeducted(data) }}
                         </span>
-                        <span v-else class="text-gray-400">—</span>
+                        <span v-else class="text-gray-400"></span>
                     </template>
                 </Column>
 
@@ -74,12 +74,12 @@
                         <span v-if="getStockDeducted(data) < 0" class="text-green-600 font-medium">
                             +{{ Math.abs(getStockDeducted(data)) }}
                         </span>
-                        <span v-else class="text-gray-400">—</span>
+                        <span v-else class="text-gray-400"></span>
                     </template>
                 </Column>
                 <Column field="category_name" header="Category" style="min-width: 150px">
                     <template #body="{ data }">{{
-                        data.category_name || "—"
+                        data.category_name || ""
                     }}</template>
                     <template #editor="{ data, field }">
                         <InputText v-model="data[field]" class="w-full" autofocus />
@@ -87,7 +87,7 @@
                 </Column>
                 <Column field="block_name" header="Block" style="min-width: 130px">
                     <template #body="{ data }">{{
-                        data.block_name || "—"
+                        data.block_name || ""
                     }}</template>
                     <template #editor="{ data, field }">
                         <InputText v-model="data[field]" class="w-full" autofocus />
@@ -95,21 +95,21 @@
                 </Column>
                 <Column field="website" header="Website" style="min-width: 120px">
                     <template #body="{ data }">{{
-                        data.website || "—"
+                        data.website || ""
                     }}</template>
                     <template #editor="{ data, field }">
                         <InputText v-model="data[field]" class="w-full" autofocus />
                     </template>
                 </Column>
                 <Column field="type" header="Type" style="min-width: 100px">
-                    <template #body="{ data }">{{ data.type || "—" }}</template>
+                    <template #body="{ data }">{{ data.type || "" }}</template>
                     <template #editor="{ data, field }">
                         <InputText v-model="data[field]" class="w-full" autofocus />
                     </template>
                 </Column>
                 <Column field="block_id" header="Block ID" style="min-width: 120px">
                     <template #body="{ data }">{{
-                        data.block_id || "—"
+                        data.block_id || ""
                     }}</template>
                     <template #editor="{ data, field }">
                         <InputText v-model="data[field]" class="w-full" autofocus />
@@ -117,7 +117,7 @@
                 </Column>
                 <Column field="identifier" header="Identifier" style="min-width: 120px">
                     <template #body="{ data }">{{
-                        data.identifier || "—"
+                        data.identifier || ""
                     }}</template>
                     <template #editor="{ data, field }">
                         <InputText v-model="data[field]" class="w-full" autofocus />
@@ -125,7 +125,7 @@
                 </Column>
                 <Column field="product_landing_page" header="Product Landing Page" style="min-width: 170px">
                     <template #body="{ data }">{{
-                        data.product_landing_page || "—"
+                        data.product_landing_page || ""
                     }}</template>
                     <template #editor="{ data, field }">
                         <InputText v-model="data[field]" class="w-full" autofocus />
@@ -133,7 +133,7 @@
                 </Column>
                 <Column field="creative_location" header="Creative Location" style="min-width: 150px">
                     <template #body="{ data }">{{
-                        data.creative_location || "—"
+                        data.creative_location || ""
                     }}</template>
                     <template #editor="{ data, field }">
                         <InputText v-model="data[field]" class="w-full" autofocus />
@@ -141,14 +141,14 @@
                 </Column>
                 <Column field="landing_page" header="Landing Page" style="min-width: 130px">
                     <template #body="{ data }">{{
-                        data.landing_page || "—"
+                        data.landing_page || ""
                     }}</template>
                     <template #editor="{ data, field }">
                         <InputText v-model="data[field]" class="w-full" autofocus />
                     </template>
                 </Column>
                 <Column field="note" header="Note" style="min-width: 150px">
-                    <template #body="{ data }">{{ data.note || "—" }}</template>
+                    <template #body="{ data }">{{ data.note || "" }}</template>
                     <template #editor="{ data, field }">
                         <InputText v-model="data[field]" class="w-full" autofocus />
                     </template>

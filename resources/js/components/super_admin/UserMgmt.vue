@@ -118,30 +118,20 @@ import Dropdown     from 'primevue/dropdown';
 import ConfirmDialog from 'primevue/confirmdialog';
 
 import { useAuthStore } from '@/js/stores/useAuthStore';
-import axios from 'axios';
-import { authHeader } from '@/js/api/user_api';
+import { fetchUsers, createUser, updateUser, deleteUser } from '@/js/api/user_mgmt_api';
 
-// ---------------------------------------------------------------------------
-// Store / composables
-// ---------------------------------------------------------------------------
 const authStore = useAuthStore();
 const confirm   = useConfirm();
 const toast     = useToast();
 
-// ---------------------------------------------------------------------------
-// Table state
-// ---------------------------------------------------------------------------
-const users       = ref([]);
+const users        = ref([]);
 const globalFilter = ref('');
-const filters     = reactive({ global: { value: null, matchMode: FilterMatchMode.CONTAINS } });
+const filters      = reactive({ global: { value: null, matchMode: FilterMatchMode.CONTAINS } });
 
 watch(globalFilter, (val) => {
-  filters.global.value = val;
+    filters.global.value = val;
 });
 
-// ---------------------------------------------------------------------------
-// Dialog state
-// ---------------------------------------------------------------------------
 const dialogVisible = ref(false);
 const isEditing     = ref(false);
 const saving        = ref(false);
@@ -149,125 +139,93 @@ const saving        = ref(false);
 const emptyForm = () => ({ id: null, name: '', email: '', password: '', role_id: null });
 const form      = reactive(emptyForm());
 
-// ---------------------------------------------------------------------------
-// Roles (static; replace with GET /roles if you add that endpoint)
-// ---------------------------------------------------------------------------
 const roles = ref([
-  { role_id: 1, role_name: 'Admin' },
-  { role_id: 2, role_name: 'Editor' },
-  { role_id: 3, role_name: 'Viewer' },
+    { role_id: 1, role_name: 'Admin' },
+    { role_id: 2, role_name: 'Editor' },
+    { role_id: 3, role_name: 'Viewer' },
 ]);
 
-// ---------------------------------------------------------------------------
-// Lifecycle
-// ---------------------------------------------------------------------------
 onMounted(async () => {
-  await authStore.fetchUser();
-  await loadUsers();
+    await authStore.fetchUser();
+    await loadUsers();
 });
 
-// ---------------------------------------------------------------------------
-// API calls
-// ---------------------------------------------------------------------------
-
-/**
- * NOTE: There is no GET /api/users endpoint in the provided routes.
- * Until one is added, we seed the table with the currently-authenticated
- * user returned by GET /api/get-name so the component is functional.
- * Replace `loadUsers` with a real /api/users call when available.
- */
 async function loadUsers() {
-  try {
-    const { data } = await axios.get('/api/get-name', { headers: authHeader() });
-    users.value = [data]; // swap for: (await axios.get('/api/users', { headers: authHeader() })).data
-  } catch (err) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to load users.', life: 3000 });
-  }
+    try {
+        const { data } = await fetchUsers();
+        users.value = data;
+    } catch (err) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to load users.',
+            life: 3000
+        });
+    }
 }
 
-async function createUser(payload) {
-  // Endpoint placeholder — add POST /api/users to routes/api.php
-  await axios.post('/api/users', payload, { headers: authHeader() });
-}
-
-async function updateUser(id, payload) {
-  // Endpoint placeholder — add PUT /api/users/{id} to routes/api.php
-  await axios.put(`/api/users/${id}`, payload, { headers: authHeader() });
-}
-
-async function deleteUserById(id) {
-  // Endpoint placeholder — add DELETE /api/users/{id} to routes/api.php
-  await axios.delete(`/api/users/${id}`, { headers: authHeader() });
-}
-
-// ---------------------------------------------------------------------------
-// Dialog helpers
-// ---------------------------------------------------------------------------
 function openAddDialog() {
-  isEditing.value = false;
-  Object.assign(form, emptyForm());
-  dialogVisible.value = true;
+    isEditing.value = false;
+    Object.assign(form, emptyForm());
+    dialogVisible.value = true;
 }
 
 function openEditDialog(row) {
-  isEditing.value = true;
-  Object.assign(form, {
-    id:      row.id,
-    name:    row.name,
-    email:   row.email,
-    password: '',
-    role_id: row.role_id ?? null,
-  });
-  dialogVisible.value = true;
+    isEditing.value = true;
+    Object.assign(form, {
+        id:       row.id,
+        name:     row.name,
+        email:    row.email,
+        password: '',
+        role_id:  row.role_id ?? null,
+    });
+    dialogVisible.value = true;
 }
 
 function closeDialog() {
-  dialogVisible.value = false;
+    dialogVisible.value = false;
 }
 
 async function submitForm() {
-  saving.value = true;
-  try {
-    if (isEditing.value) {
-      await updateUser(form.id, { name: form.name, email: form.email, role_id: form.role_id });
-      toast.add({ severity: 'success', summary: 'Updated', detail: 'User updated.', life: 3000 });
-    } else {
-      await createUser({ name: form.name, email: form.email, password: form.password, role_id: form.role_id });
-      toast.add({ severity: 'success', summary: 'Created', detail: 'User created.', life: 3000 });
+    saving.value = true;
+    try {
+        if (isEditing.value) {
+            await updateUser(form.id, { name: form.name, email: form.email, role_id: form.role_id });
+            toast.add({ severity: 'success', summary: 'Updated', detail: 'User updated.', life: 3000 });
+        } else {
+            await createUser({ name: form.name, email: form.email, password: form.password, role_id: form.role_id });
+            toast.add({ severity: 'success', summary: 'Created', detail: 'User created.', life: 3000 });
+        }
+        closeDialog();
+        await loadUsers();
+    } catch (err) {
+        toast.add({
+            severity: 'error',
+            summary:  'Error',
+            detail:   err?.response?.data?.message ?? 'Operation failed.',
+            life:     4000,
+        });
+    } finally {
+        saving.value = false;
     }
-    closeDialog();
-    await loadUsers();
-  } catch (err) {
-    toast.add({
-      severity: 'error',
-      summary:  'Error',
-      detail:   err?.response?.data?.message ?? 'Operation failed.',
-      life:     4000,
-    });
-  } finally {
-    saving.value = false;
-  }
 }
 
-// ---------------------------------------------------------------------------
-// Delete
-// ---------------------------------------------------------------------------
 function confirmDelete(row) {
-  confirm.require({
-    message: `Delete user "${row.name}"? This cannot be undone.`,
-    header:  'Confirm Delete',
-    icon:    'pi pi-exclamation-triangle',
-    acceptClass: 'p-button-danger',
-    accept: async () => {
-      try {
-        await deleteUserById(row.id);
-        toast.add({ severity: 'success', summary: 'Deleted', detail: 'User removed.', life: 3000 });
-        await loadUsers();
-      } catch (err) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Delete failed.', life: 3000 });
-      }
-    },
-  });
+    confirm.require({
+        message:     `Delete user "${row.name}"? This cannot be undone.`,
+        header:      'Confirm Delete',
+        icon:        'pi pi-exclamation-triangle',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+            try {
+                await deleteUser(row.id);
+                toast.add({ severity: 'success', summary: 'Deleted', detail: 'User removed.', life: 3000 });
+                await loadUsers();
+            } catch (err) {
+                toast.add({ severity: 'error', summary: 'Error', detail: 'Delete failed.', life: 3000 });
+            }
+        },
+    });
 }
 </script>
 

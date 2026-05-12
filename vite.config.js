@@ -1,55 +1,44 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 import laravel from "laravel-vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import vue from "@vitejs/plugin-vue";
 import Components from "unplugin-vue-components/vite";
 import { PrimeVueResolver } from "@primevue/auto-import-resolver";
 import { fileURLToPath, URL } from "url";
-import os from "os";
-
-function getLanIp() {
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-        for (const iface of interfaces[name]) {
-            if (iface.family === "IPv4" && !iface.internal) {
-                return iface.address;
-            }
-        }
-    }
-    return "localhost"; // fallback
-}
-
-const lanIp = getLanIp();
 
 export default defineConfig({
-    base: "http://3.27.31.238/markmap/",
+    base: "/markmap/",
+
     server: {
-        host: "0.0.0.0",      // bind to all network interfaces
-        cors: true,  
+        host: "0.0.0.0",
         port: 5173,
+        cors: true,
         hmr: {
-            host: "192.168.22.121",  // your LAN IP
+            host: "localhost",
         },
     },
+
     plugins: [
         laravel({
             input: [
-                "resources/css/app.css",  
+                "resources/css/app.css",
                 "resources/css/mainlayout.css",
                 "resources/css/dashboard.css",
                 "resources/js/app.js",
                 "resources/css/campaigns.css",
                 "resources/css/wsd.css",
-                 "resources/css/campaign_chart.css",
+                "resources/css/campaign_chart.css",
                 "resources/css/internal_promos.css",
                 "resources/css/external_promos.css",
                 "resources/css/website_campaigns.css",
             ],
-            assetUrl: "http://3.27.31.238/markmap/",
             refresh: true,
+            // remove assetUrl unless you REALLY use CDN
         }),
+
         tailwindcss(),
         vue(),
+
         Components({
             resolvers: [PrimeVueResolver()],
         }),
@@ -62,19 +51,11 @@ export default defineConfig({
             "@public": fileURLToPath(new URL("./public", import.meta.url)),
             vue: "vue/dist/vue.esm-bundler.js",
         },
-        dedupe: ["@fullcalendar/core"],
     },
+
     build: {
-    outDir: "public/build",
-    emptyOutDir: true,
-    chunkSizeWarningLimit: 1500,
-    cssMinify: false,
-},
-    css: {
-        preprocessorOptions: {
-            scss: {
-                includePaths: ["resources/css/assets/variables"],
-            },
-        },
+        outDir: "public/build",
+        emptyOutDir: true,
+        chunkSizeWarningLimit: 1500,
     },
 });

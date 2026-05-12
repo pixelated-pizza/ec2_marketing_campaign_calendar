@@ -1,5 +1,5 @@
 <template>
-    <div class="dark:bg-gray-900 bg-white p-5">
+    <div class="card flex flex-col h-[85vh]">
         <h4 class="font-semibold text-lg text-center p-2 dark:text-white">
             Website Sale Details
         </h4>
@@ -59,7 +59,7 @@
                 dataKey="campaign_id"
                 showGridlines
                 scrollable
-                scrollHeight="60vh"
+                scrollHeight="flex"
                 scrollDirection="both"
                 size="small"
                 class="text-md mt-5"

@@ -79,7 +79,7 @@ const userStore = useUserStore();
 const ui = useUIStore();
 
 const userName = computed(() => userStore.name);
-const faviconUrl = `${import.meta.env.VITE_BASE_URL || ''}/favicon.ico`;
+const faviconUrl = `${import.meta.env.VITE_BASE_URL || ''}/app_icon.png`;
 const showLogoutDialog = ref(false);
 const loggingOut = ref(false);
 

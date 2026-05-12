@@ -44,7 +44,6 @@
         "firebase": "^12.9.0",
         "frappe-gantt": "^1.0.4",
         "jsgantt-improved": "^2.8.10",
-        "jspreadsheet-ce": "^5.0.4",
         "lucide-vue-next": "^0.546.0",
         "pinia": "^3.0.3",
         "primeflex": "^4.0.0",

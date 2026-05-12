@@ -14,6 +14,8 @@ use App\Http\Controllers\ArchivedPromotionController;
 use App\Http\Controllers\ArchivedWebsiteSaleController;
 use App\Http\Controllers\WebsitePromoController;
 use App\Http\Controllers\CategoryFeaturedSkusController;
+use App\Http\Controllers\UserController;
+
 
 use App\Http\Controllers\NETOProductController;
 
@@ -23,6 +25,13 @@ return $request->user();
 
 Route::get('/heartbeat', function () {
     return response()->json(['status' => 'ok']);
+});
+
+Route::middleware('auth:sanctum')->prefix('users')->group(function () {
+    Route::get('/', [UserController::class, 'index']);
+    Route::post('/', [UserController::class, 'store']);
+    Route::put('/{id}', [UserController::class, 'update']);
+    Route::delete('/{id}', [UserController::class, 'destroy']);
 });
 
 Route::post('/login', [AuthController::class, 'login']);

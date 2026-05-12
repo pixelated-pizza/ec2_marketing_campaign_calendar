@@ -27,3 +27,8 @@ td.py-2 input {
     background-color: #1a3a4a !important;
     outline: 2px solid #3b82f6;
 }
+
+:deep(.p-datatable .p-datatable-thead > tr > th),
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
+    border: 1.5px solid #2f2f44 !important;
+}
