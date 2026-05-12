@@ -1,5 +1,5 @@
 <template>
-    <div class="card flex flex-col h-[85vh]">
+    <div class="card">
         <h4 class="font-semibold text-lg text-center p-2 dark:text-white">
             Website Sale Details
         </h4>
