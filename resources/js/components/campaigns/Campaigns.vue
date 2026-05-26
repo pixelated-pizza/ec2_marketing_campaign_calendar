@@ -22,7 +22,7 @@
             <div ref="ganttContainer" style="min-height: 500px; height: 600px"
                 class="gantt-container w-full bg-white dark:bg-gray-900"></div>
 
-            <div v-if="loading"
+            <div v-show="loading"
                 class="absolute inset-0 bg-white/80 dark:bg-gray-900/80 flex flex-col gap-4 justify-center items-center z-10">
                 <p class="text-gray-600 dark:text-gray-300 text-lg">
                     Loading calendar...
@@ -37,7 +37,6 @@
         </div>
     </div>
 </template>
-
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
 
@@ -52,17 +51,10 @@ import { useUIStore } from "@/js/stores/ui.js";
 import { getCurrentInstance } from "vue";
 const toastr = getCurrentInstance().appContext.config.globalProperties.$toastr;
 
-const campaignsCache = ref(null);
-const ganttTasksLoaded = ref(false);
-let timelineTimeout;
-
 const loading = ref(true);
-
 const ui = useUIStore();
 
 import { debounce } from "lodash";
-
-const renderFilteredCampaignsDebounced = debounce(renderFilteredCampaigns, 200);
 
 import {
     fetchCampaigns,
@@ -77,17 +69,11 @@ const hiddenCampaigns = ref(new Set());
 const selectedChannel = ref(null);
 const searchTerm = ref("");
 let allCampaigns = [];
-
 const dateRange = ref(null);
-
 const newTasks = new Set();
 const justCreatedTasks = new Set();
 const channels = ref([]);
 let resizeObserver;
-
-function parseEndDate(dateInput) {
-    return dateInput ? new Date(dateInput) : new Date();
-}
 
 function formatDateForDB(date) {
     const d = new Date(date.getTime() - 1000);
@@ -105,6 +91,47 @@ function formatLocalDateTime(date) {
     const h = String(d.getHours()).padStart(2, "0");
     const min = String(d.getMinutes()).padStart(2, "0");
     return `${y}-${m}-${day} ${h}:${min}`;
+}
+
+function applyGanttTheme() {
+    const isDark = document.documentElement.classList.contains("app-dark");
+
+    if (isDark) {
+        gantt.setSkin("dark");
+    } else {
+        gantt.setSkin("meadow");
+    }
+
+    requestAnimationFrame(() => {
+        gantt.render();
+        gantt.setSizes();
+    });
+}
+
+function autoAdjustTimeline(filteredTasks = []) {
+    if (!filteredTasks.length) return;
+
+    let minDate = new Date();
+    let maxDate = new Date();
+
+    filteredTasks.forEach((task) => {
+        if (!task.start_date || !task.end_date) return;
+        const start = new Date(task.start_date);
+        const end = new Date(task.end_date);
+        if (isNaN(start) || isNaN(end)) return;
+        if (start < minDate) minDate = start;
+        if (end > maxDate) maxDate = end;
+    });
+
+    const padding = 3;
+    minDate = new Date(minDate.getTime() - padding * 86400000);
+    maxDate = new Date(maxDate.getTime() + padding * 86400000);
+
+    gantt.config.start_date = minDate;
+    gantt.config.end_date = maxDate;
+
+    gantt.render();
+    gantt.setSizes();
 }
 
 gantt.config.time_step = 1;
@@ -137,6 +164,7 @@ async function initGantt() {
                 task.type === "project" ? "<div class='add_child'>+</div>" : "",
         },
     ];
+
     gantt.config.date_format = "%Y-%m-%d %H:%i";
     gantt.config.xml_date = "%Y-%m-%d %H:%i";
     gantt.config.drag_move = true;
@@ -146,14 +174,14 @@ async function initGantt() {
     const fmt = gantt.date.date_to_str("%Y-%m-%d %H:%i");
 
     gantt.templates.tooltip_text = (start, end, task) => `
-  Task: <b>${task.text}</b><br/>
-  Start: <b>${fmt(start)}</b><br/>
-  End: <b>${fmt(end)}</b><br/>
-  Progress: <b>${Math.round((task.progress || 0) * 100)}%</b>
-`;
+        Task: <b>${task.text}</b><br/>
+        Start: <b>${fmt(start)}</b><br/>
+        End: <b>${fmt(end)}</b><br/>
+        Progress: <b>${Math.round((task.progress || 0) * 100)}%</b>
+    `;
 
     gantt.config.scales = [
-        { unit: "day", step: 1, format: "%d %M" }, // Top scale: day
+        { unit: "day", step: 1, format: "%d %M" },
     ];
 
     gantt.config.scale_height = 60;
@@ -177,40 +205,31 @@ async function initGantt() {
         },
     ];
 
-    gantt.templates.time_picker = function (date) {
-        return gantt.date.date_to_str(gantt.config.time_picker)(date);
-    };
-
-    gantt.eachTask((task) => {
-        if (!task.channel_id && channels.value.length) {
-            task.channel_id = channels.value[0].channel_id;
-        }
-    });
-
     gantt.init(ganttContainer.value);
-    applyGanttTheme();
 
     ganttContainer.value.addEventListener("change", (e) => {
         if (e.target.classList.contains("hide-checkbox")) {
             const taskId = e.target.dataset.taskId;
             const checked = e.target.checked;
-
             if (checked) {
                 hiddenCampaigns.value.add(taskId);
             } else {
                 hiddenCampaigns.value.delete(taskId);
             }
-
             applyHiddenCampaigns();
         }
     });
 
+
+    gantt.attachEvent("onBeforeRender", () => {
+        console.trace("🔁 gantt.render() called from:");
+        return true;
+    });
+
     gantt.attachEvent("onAfterTaskUpdate", async (id, task) => {
+        if (newTasks.has(id) || justCreatedTasks.has(id)) return;
         ui.showLoader();
-        if (newTasks.has(id) || justCreatedTasks.has(id)) return; // skip temp/new tasks
-
         task.parent = `channel_${task.channel_id}`;
-
         try {
             await updateCampaign(id, {
                 name: task.text,
@@ -220,11 +239,9 @@ async function initGantt() {
                 background_color: task.color || null,
             });
             toastr.success("Campaign updated successfully.");
-            ui.hideLoader();
         } catch (err) {
             console.error("Error updating campaign:", err);
             toastr.error("Failed to update campaign.");
-            ui.hideLoader();
         } finally {
             justCreatedTasks.delete(id);
             ui.hideLoader();
@@ -232,19 +249,19 @@ async function initGantt() {
     });
 
     gantt.attachEvent("onAfterTaskDelete", async (id, task) => {
-        ui.showLoader();
         if (newTasks.has(id)) {
             newTasks.delete(id);
             return;
         }
         if (task.type !== "project") {
+            ui.showLoader();
             try {
                 await deleteCampaign(id);
                 toastr.success("Campaign deleted successfully.");
-                ui.hideLoader();
             } catch (err) {
                 console.error("Failed to delete campaign:", err);
                 toastr.error("Failed to delete campaign.");
+            } finally {
                 ui.hideLoader();
             }
         }
@@ -262,21 +279,16 @@ async function initGantt() {
         task.type = "task";
         task.text = "New Campaign";
         task.start_date = new Date();
-        task.end_date = new Date(
-            task.start_date.getTime() + 13 * 24 * 60 * 60 * 1000,
-        );
-
+        task.end_date = new Date(task.start_date.getTime() + 13 * 24 * 60 * 60 * 1000);
         if (task.parent) {
             task.channel_id = task.parent.replace("channel_", "");
         }
-
         newTasks.add(task.id);
         return true;
     });
 
     gantt.attachEvent("onLightboxSave", async (id, task) => {
         const defaultColor = "#60A5FA";
-
         ui.showLoader();
 
         if (newTasks.has(id)) {
@@ -288,13 +300,10 @@ async function initGantt() {
                     channel_id: task.channel_id,
                     background_color: task.color || defaultColor,
                 };
-
                 const saved = await createCampaign(payload);
                 gantt.changeTaskId(id, saved.campaign_id);
-
                 newTasks.delete(id);
                 justCreatedTasks.add(saved.campaign_id);
-
                 toastr.success("Campaign created successfully.");
             } catch (err) {
                 console.error("Error creating campaign:", err);
@@ -304,7 +313,6 @@ async function initGantt() {
                 ui.hideLoader();
                 return false;
             }
-
             ui.hideLoader();
             return false;
         }
@@ -318,7 +326,6 @@ async function initGantt() {
                 background_color: task.color || defaultColor,
             });
             toastr.success("Campaign updated successfully.");
-            ui.hideLoader();
         } catch (err) {
             console.error("Error updating campaign:", err);
             toastr.error("Failed to update campaign.");
@@ -326,39 +333,9 @@ async function initGantt() {
             return false;
         }
 
+        ui.hideLoader();
         return true;
     });
-}
-
-function autoAdjustTimeline(filteredTasks = []) {
-    if (!filteredTasks.length) return;
-
-    let minDate = null;
-    let maxDate = null;
-
-    filteredTasks.forEach((task) => {
-        // ✅ Skip tasks without valid dates
-        if (!task.start_date || !task.end_date) return;
-        const start = new Date(task.start_date);
-        const end = new Date(task.end_date);
-        if (isNaN(start) || isNaN(end)) return; // ✅ Skip invalid dates
-
-        if (!minDate || start < minDate) minDate = start;
-        if (!maxDate || end > maxDate) maxDate = end;
-    });
-
-    if (minDate && maxDate) {
-        const padding = 1;
-        minDate = new Date(minDate.getTime() - padding * 86400000);
-        maxDate = new Date(maxDate.getTime() + padding * 86400000);
-
-        gantt.config.start_date = minDate;
-        gantt.config.end_date = maxDate;
-
-        gantt.render();
-        gantt.setSizes();
-        applyGanttTheme();
-    }
 }
 
 async function loadCampaigns() {
@@ -372,6 +349,8 @@ async function loadCampaigns() {
 }
 
 function renderFilteredCampaigns() {
+    if (!channels.value.length) return;
+
     const channelMap = {};
     const data = [];
 
@@ -386,20 +365,20 @@ function renderFilteredCampaigns() {
     });
 
     sortedChannels.forEach((c) => {
-        const parentId = `channel_${c.channel_id}`;
-        channelMap[c.channel_id] = parentId;
-        data.push({
-            id: parentId,
-            text: c.name,
-            channel_id: c.channel_id,
-            type: "project",
-            open: true,
-            hide_bar: true,
-            // ✅ Give project rows explicit valid dates
-            start_date: new Date(),
-            end_date: new Date(new Date().getTime() + 86400000),
-        });
+    const parentId = `channel_${c.channel_id}`;
+    channelMap[String(c.channel_id)] = parentId;
+    data.push({
+        id: parentId,
+        text: c.name,
+        channel_id: String(c.channel_id),
+        type: gantt.config.types.project,  
+        open: true,
+        hide_bar: true,
+        readonly: true,
+        start_date: new Date(),
+        end_date: new Date(new Date().getTime() + 86400000 * 365), 
     });
+});
 
     const [startFilter, endFilter] = dateRange.value || [];
 
@@ -410,53 +389,64 @@ function renderFilteredCampaigns() {
         const matchSearch = searchTerm.value
             ? c.name.toLowerCase().includes(searchTerm.value.toLowerCase())
             : true;
-
         const campaignStart = new Date(c.start_date);
         const campaignEnd = new Date(c.end_date);
-
         let matchDate = true;
         if (startFilter && endFilter) {
             matchDate = campaignEnd >= startFilter && campaignStart <= endFilter;
         }
-
         return matchChannel && matchSearch && matchDate;
     });
 
     sortedChannels.forEach((c) => {
-        const channelTasks = filtered.filter((f) => f.channel_id === c.channel_id);
-        channelTasks.forEach((campaign) => {
-            // ✅ Ensure dates are always valid Date objects
-            const startDate = campaign.start_date ? new Date(campaign.start_date) : new Date();
-            const endDate = campaign.end_date ? new Date(campaign.end_date) : new Date(startDate.getTime() + 86400000);
+    filtered
+        .filter((f) => String(f.channel_id) === String(c.channel_id)) // ✅ strict string comparison both sides
+        .forEach((campaign) => {
+                const startDate = campaign.start_date ? new Date(campaign.start_date) : new Date();
+                const endDate = campaign.end_date
+                    ? new Date(campaign.end_date)
+                    : new Date(startDate.getTime() + 86400000);
+                if (isNaN(startDate) || isNaN(endDate)) return;
 
-            if (isNaN(startDate) || isNaN(endDate)) return; // ✅ Skip bad data
+                const parentId = channelMap[String(campaign.channel_id)];
+                if (!parentId) {
+                    console.warn("⚠️ No parent found for channel_id:", campaign.channel_id);
+                    return;
+                }
 
-            data.push({
-                id: campaign.campaign_id,
-                text: campaign.name,
-                start_date: startDate,
-                end_date: endDate,
-                channel_id: campaign.channel_id,
-                color: campaign.background_color,
-                parent: channelMap[campaign.channel_id],
+                data.push({
+                    id: campaign.campaign_id,
+                    text: campaign.name,
+                    type: "task",
+                    start_date: startDate,
+                    end_date: endDate,
+                    channel_id: String(campaign.channel_id),
+                    color: campaign.background_color,
+                    parent: parentId,
+                });
             });
-        });
     });
 
     gantt.clearAll();
     gantt.parse({ data });
-    gantt.render();
-    applyGanttTheme();
-    applyHiddenCampaigns();
 
-    setTimeout(() => autoAdjustTimeline(filtered), 50);
+    gantt.eachTask(t => console.log(t.type, t.id, t.$level, t.parent));
+
+    if (filtered.length) {
+        setTimeout(() => {
+            autoAdjustTimeline(filtered);
+            applyHiddenCampaigns();
+        }, 50);
+    } else {
+        gantt.render();
+        applyHiddenCampaigns();
+    }
 }
 
 function applyHiddenCampaigns() {
     gantt.eachTask((task) => {
         const row = gantt.getTaskRowNode(task.id);
         if (!row) return;
-
         if (hiddenCampaigns.value.has(task.id)) {
             row.style.display = "none";
             const bar = gantt.getTaskNode(task.id);
@@ -469,8 +459,8 @@ function applyHiddenCampaigns() {
     });
 }
 
-
 watch([searchTerm, selectedChannel, dateRange], () => {
+    if (!channels.value.length || !ganttInitialized) return;
     renderFilteredCampaigns();
 });
 
@@ -481,46 +471,27 @@ function resetFilters() {
     renderFilteredCampaigns();
 }
 
-function applyGanttTheme() {
-    const isDark = document.documentElement.classList.contains("app-dark");
-
-    if (isDark) {
-        gantt.setSkin("dark");
-    } else {
-        gantt.setSkin("meadow");
-    }
-
-    requestAnimationFrame(() => {
-        gantt.render();
-        gantt.setSizes();
-    });
-}
-
 function watchDarkMode() {
     const observer = new MutationObserver(() => {
         applyGanttTheme();
     });
-
     observer.observe(document.documentElement, {
         attributes: true,
         attributeFilter: ["class"],
     });
-
     return observer;
 }
 
 let darkObserver;
 let ganttInitialized = false;
+
 onMounted(async () => {
     if (ganttInitialized) return;
     ganttInitialized = true;
     try {
         loading.value = true;
-
-        // 1️⃣ Let layout render first
         await nextTick();
 
-        // 2️⃣ Delay heavy gantt init so UI paints
         setTimeout(async () => {
             try {
                 channels.value = await fetchChannels();
@@ -532,7 +503,6 @@ onMounted(async () => {
                     return;
                 }
 
-                // ✅ initGantt FIRST, then load data
                 await initGantt();
                 await loadCampaigns();
 
@@ -547,6 +517,8 @@ onMounted(async () => {
                 console.error("Error initializing gantt:", err);
             } finally {
                 loading.value = false;
+                await nextTick();
+                gantt.setSizes();
             }
         }, 0);
     } catch (err) {
@@ -565,17 +537,14 @@ onBeforeUnmount(() => {
         console.warn("Failed to cleanup gantt", e);
     }
 });
-
 </script>
 
 <style>
-/* ---------- BASE CONTAINER ---------- */
 .gantt-container {
     width: 100%;
     min-height: 500px;
 }
 
-/* ========== FORCE DARK MODE (STRONGER) ========== */
 .dark .gantt_container,
 .dark .gantt_layout_root,
 .dark .gantt_grid,
@@ -591,20 +560,15 @@ onBeforeUnmount(() => {
 .dark .gantt_task_bg,
 .dark .gantt_task_content {
     background: #111827 !important;
-    /* gray-900 */
     border-color: #374151 !important;
-    /* gray-700 */
 }
 
-/* Grid headers */
 .dark .gantt_grid_head_cell,
 .dark .gantt_grid_scale {
     background: #1f2937 !important;
-    /* gray-800 */
     color: #e5e7eb !important;
 }
 
-/* Text */
 .dark .gantt_tree_content,
 .dark .gantt_grid_head_text,
 .dark .gantt_task_content,
@@ -612,18 +576,14 @@ onBeforeUnmount(() => {
     color: #e5e7eb !important;
 }
 
-/* Timeline background stripes */
 .dark .gantt_task_bg {
     background: #111827 !important;
 }
 
-/* Today line */
 .dark .gantt_today_line {
     background: #60a5fa !important;
-    /* blue-400 */
 }
 
-/* Lightbox (popup) */
 .dark .gantt_lightbox {
     background: #111827 !important;
     color: #e5e7eb !important;
