@@ -493,34 +493,37 @@ onMounted(async () => {
         await nextTick();
 
         setTimeout(async () => {
-            try {
-                channels.value = await fetchChannels();
-                darkObserver = watchDarkMode();
+    try {
+        channels.value = await fetchChannels();
+        darkObserver = watchDarkMode();
 
-                if (!ganttContainer.value) {
-                    console.error("Gantt container not found");
-                    loading.value = false;
-                    return;
-                }
+        if (!ganttContainer.value) {
+            loading.value = false;
+            return;
+        }
 
-                await initGantt();
-                await loadCampaigns();
+        await initGantt();
+        await loadCampaigns();
 
-                let resizeTimeout;
-                resizeObserver = new ResizeObserver(() => {
-                    if (!ganttInitialized) return;
-                    clearTimeout(resizeTimeout);
-                    resizeTimeout = setTimeout(() => gantt.setSizes(), 100);
-                });
-                resizeObserver.observe(ganttContainer.value);
-            } catch (err) {
-                console.error("Error initializing gantt:", err);
-            } finally {
-                loading.value = false;
-                await nextTick();
-                gantt.setSizes();
-            }
-        }, 0);
+        // ✅ Apply skin LAST, after all renders are done
+        const isDark = document.documentElement.classList.contains("app-dark");
+        gantt.setSkin(isDark ? "dark" : "meadow");
+
+        let resizeTimeout;
+        resizeObserver = new ResizeObserver(() => {
+            if (!ganttInitialized) return;
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => gantt.setSizes(), 100);
+        });
+        resizeObserver.observe(ganttContainer.value);
+    } catch (err) {
+        console.error("Error initializing gantt:", err);
+    } finally {
+        loading.value = false;
+        await nextTick();
+        gantt.setSizes();
+    }
+}, 0);
     } catch (err) {
         console.error(err);
         loading.value = false;
