@@ -1,5 +1,5 @@
 <template>
-    <div class="card">
+    <div class="card" style="height: calc(100vh - 120px); display: flex; flex-direction: column; overflow: hidden;">
         <h4 class="font-semibold text-lg text-center p-2 dark:text-white">
             Website Sale Details
         </h4>
@@ -17,7 +17,7 @@
             </div>
         </template>
 
-        <div v-else>
+        <div v-else style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
             <div
                 class="mb-2 flex justify-content-between flex-wrap gap-4 w-full"
             >
@@ -59,7 +59,6 @@
                 dataKey="campaign_id"
                 showGridlines
                 scrollable
-                scrollHeight="flex"
                 scrollDirection="both"
                 size="small"
                 class="text-md mt-5"
