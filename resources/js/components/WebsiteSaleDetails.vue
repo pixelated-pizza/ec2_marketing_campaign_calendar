@@ -18,374 +18,181 @@
         </template>
 
         <div v-else style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
-            <div
-                class="mb-2 flex justify-content-between flex-wrap gap-4 w-full"
-            >
+            <div class="mb-2 flex justify-content-between flex-wrap gap-4 w-full">
                 <div class="flex items-center w-full md:w-auto">
                     <IconField>
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText
-                            placeholder="Search website sale"
-                            v-model="searchQuery"
-                        />
+                        <InputText placeholder="Search website sale" v-model="searchQuery" />
                     </IconField>
                 </div>
                 <div class="flex items-center gap-2">
-                    <label
-                        for="campaignFilter"
-                        class="text-black dark:text-white select-none mr-2"
-                    >
+                    <label for="campaignFilter" class="text-black dark:text-white select-none mr-2">
                         Filter Campaigns:
                     </label>
-                    <Select
-                        v-model="campaignFilter"
-                        inputId="campaignFilter"
-                        class="w-48"
-                        :options="[
-                            { label: 'All', value: 'ALL' },
-                            { label: 'Running', value: 'RUNNING' },
-                            { label: 'Ended', value: 'ENDED' },
-                        ]"
-                        optionLabel="label"
-                        optionValue="value"
-                    />
+                    <Select v-model="campaignFilter" inputId="campaignFilter" class="w-48" :options="[
+                        { label: 'All', value: 'ALL' },
+                        { label: 'Running', value: 'RUNNING' },
+                        { label: 'Ended', value: 'ENDED' },
+                    ]" optionLabel="label" optionValue="value" />
                 </div>
             </div>
 
-            <DataTable
-                :value="filteredCampaigns"
-                dataKey="campaign_id"
-                showGridlines
-                scrollable
-                scrollDirection="both"
-                size="small"
-                class="text-md mt-5"
-                editMode="cell"
-                @cell-edit-complete="onCellEditComplete"
-                :rowClass="rowClass"
-                paginator
-                :rows="15"
-                :loading="loading"
-            >
+            <DataTable :value="filteredCampaigns" dataKey="campaign_id" showGridlines scrollable scrollDirection="both"
+                size="small" class="text-md mt-5" editMode="cell" @cell-edit-complete="onCellEditComplete"
+                :rowClass="rowClass" paginator :rows="15" :loading="loading">
                 <!-- Frozen left -->
-                <Column
-                    header="Status"
-                    frozen
-                    sortable
-                    sortField="statusOrder"
-                    style="min-width: 110px"
-                >
+                <Column header="Status" frozen sortable sortField="statusOrder" style="min-width: 110px">
                     <template #body="{ data }">
-                        <Badge
-                            :value="data.status"
-                            :severity="getSeverity(data.status)"
-                            class="font-semibold"
-                        />
+                        <Badge :value="data.status" :severity="getSeverity(data.status)" class="font-semibold" />
                     </template>
                 </Column>
-                <Column
-                    field="store_name"
-                    header="Channel"
-                    frozen
-                    style="min-width: 130px"
-                />
-                <Column
-                    field="name"
-                    header="Event Name"
-                    frozen
-                    style="min-width: 220px"
-                />
+                <Column field="store_name" header="Channel" frozen style="min-width: 130px" />
+                <Column field="name" header="Event Name" frozen style="min-width: 220px" />
 
                 <!-- Scrollable -->
-                <Column
-                    field="start_date"
-                    header="Start Date"
-                    style="min-width: 190px"
-                >
+                <Column field="start_date" header="Start Date" style="min-width: 190px">
                     <template #body="{ data }">{{
                         formatDate(data.start_date)
                     }}</template>
                 </Column>
-                <Column
-                    field="end_date"
-                    header="End Date"
-                    style="min-width: 190px"
-                >
+                <Column field="end_date" header="End Date" style="min-width: 190px">
                     <template #body="{ data }">{{
                         formatDate(data.end_date)
                     }}</template>
                 </Column>
 
-                <Column
-                    field="featured_products_sheet_url"
-                    header="Featured Products Sheet"
-                    style="min-width: 210px"
-                >
+                <Column field="featured_products_sheet_url" header="Featured Products Sheet" style="min-width: 210px">
                     <template #body="{ data }">
-                        <a
-                            v-if="data.featured_products_sheet_url"
-                            :href="data.featured_products_sheet_url"
-                            target="_blank"
-                            class="text-green-500 hover:underline text-sm break-all"
-                            @click.stop
-                        >
+                        <a v-if="data.featured_products_sheet_url" :href="data.featured_products_sheet_url"
+                            target="_blank" class="text-green-500 hover:underline text-sm break-all" @click.stop>
                             {{ data.featured_products_sheet_url }}
                         </a>
                         <span v-else class="text-gray-400">—</span>
                     </template>
                     <template #editor="{ data, field }">
-                        <InputText
-                            v-model="data[field]"
-                            class="w-full"
-                            autofocus
-                        />
+                        <InputText v-model="data[field]" class="w-full" autofocus />
                     </template>
                 </Column>
 
-                <Column
-                    field="run_sheet"
-                    header="Run Sheet"
-                    style="min-width: 180px"
-                >
+                <Column field="run_sheet" header="Run Sheet" style="min-width: 180px">
                     <template #body="{ data }">
-                        <a
-                            v-if="data.run_sheet"
-                            :href="data.run_sheet"
-                            target="_blank"
-                            class="text-green-500 hover:underline text-sm break-all"
-                            @click.stop
-                        >
+                        <a v-if="data.run_sheet" :href="data.run_sheet" target="_blank"
+                            class="text-green-500 hover:underline text-sm break-all" @click.stop>
                             {{ data.run_sheet }}
                         </a>
                         <span v-else class="text-gray-400">—</span>
                     </template>
                     <template #editor="{ data, field }">
-                        <InputText
-                            v-model="data[field]"
-                            class="w-full"
-                            autofocus
-                        />
+                        <InputText v-model="data[field]" class="w-full" autofocus />
                     </template>
                 </Column>
 
-                <Column
-                    field="event_master_sheet"
-                    header="Event Master Sheet"
-                    style="min-width: 180px"
-                >
+                <Column field="event_master_sheet" header="Event Master Sheet" style="min-width: 180px">
                     <template #body="{ data }">
-                        <a
-                            v-if="data.event_master_sheet"
-                            :href="data.event_master_sheet"
-                            target="_blank"
-                            class="text-blue-500 hover:underline text-sm break-all"
-                            @click.stop
-                        >
+                        <a v-if="data.event_master_sheet" :href="data.event_master_sheet" target="_blank"
+                            class="text-blue-500 hover:underline text-sm break-all" @click.stop>
                             {{ data.event_master_sheet }}
                         </a>
                         <span v-else class="text-gray-400">—</span>
                     </template>
                     <template #editor="{ data, field }">
-                        <InputText
-                            v-model="data[field]"
-                            class="w-full"
-                            autofocus
-                        />
+                        <InputText v-model="data[field]" class="w-full" autofocus />
                     </template>
                 </Column>
 
-                <Column
-                    field="ess"
-                    header="ESS to Execute"
-                    style="min-width: 160px"
-                >
+                <Column field="ess" header="ESS to Execute" style="min-width: 160px">
                     <template #body="{ data }">{{ data.ess || "—" }}</template>
                     <template #editor="{ data, field }">
-                        <InputText
-                            v-model="data[field]"
-                            class="w-full"
-                            autofocus
-                        />
+                        <InputText v-model="data[field]" class="w-full" autofocus />
                     </template>
                 </Column>
 
-                <Column
-                    field="cms_to_audit"
-                    header="CMS to Audit"
-                    style="min-width: 160px"
-                >
+                <Column field="cms_to_audit" header="CMS to Audit" style="min-width: 160px">
                     <template #body="{ data }">{{
                         data.cms_to_audit || "—"
                     }}</template>
                     <template #editor="{ data, field }">
-                        <InputText
-                            v-model="data[field]"
-                            class="w-full"
-                            autofocus
-                        />
+                        <InputText v-model="data[field]" class="w-full" autofocus />
                     </template>
                 </Column>
 
-                <Column
-                    field="terms_conditions"
-                    header="T&Cs"
-                    style="min-width: 180px"
-                >
+                <Column field="terms_conditions" header="T&Cs" style="min-width: 180px">
                     <template #body="{ data }">
                         {{ data.terms_conditions || "Auto generated" }}
                     </template>
                     <template #editor="{ data, field }">
-                        <Textarea
-                            v-model="data[field]"
-                            class="w-full"
-                            rows="3"
-                            autoResize
-                            autofocus
-                        />
+                        <Textarea v-model="data[field]" class="w-full" rows="3" autoResize autofocus />
                     </template>
                 </Column>
 
-                <Column
-                    field="mockup_banner_locations"
-                    header="Mockup & Banner Locations"
-                    style="min-width: 200px"
-                >
+                <Column field="mockup_banner_locations" header="Mockup & Banner Locations" style="min-width: 200px">
                     <template #body="{ data }">{{
                         data.mockup_banner_locations || "—"
                     }}</template>
                     <template #editor="{ data, field }">
-                        <InputText
-                            v-model="data[field]"
-                            class="w-full"
-                            autofocus
-                        />
+                        <InputText v-model="data[field]" class="w-full" autofocus />
                     </template>
                 </Column>
 
-                <Column
-                    field="is_sku_list_to_feature"
-                    header="SKU List to Feature?"
-                    style="min-width: 160px"
-                >
+                <Column field="is_sku_list_to_feature" header="SKU List to Feature?" style="min-width: 160px">
                     <template #body="{ data }">
-                        <span
-                            :class="
-                                data.is_sku_list_to_feature == 1 ||
-                                data.is_sku_list_to_feature === true
-                                    ? 'text-green-500 font-semibold'
-                                    : 'text-red-400 font-semibold'
-                            "
-                        >
+                        <span :class="data.is_sku_list_to_feature == 1 ||
+                            data.is_sku_list_to_feature === true
+                            ? 'text-green-500 font-semibold'
+                            : 'text-red-400 font-semibold'
+                            ">
                             {{
                                 data.is_sku_list_to_feature == 1 ||
-                                data.is_sku_list_to_feature === true
+                                    data.is_sku_list_to_feature === true
                                     ? "Yes"
                                     : "No"
                             }}
                         </span>
                     </template>
                     <template #editor="{ data, field }">
-                        <Select
-                            v-model="data[field]"
-                            :options="[
-                                { label: 'Yes', value: 1 },
-                                { label: 'No', value: 0 },
-                            ]"
-                            optionLabel="label"
-                            optionValue="value"
-                            class="w-full"
-                        />
+                        <Select v-model="data[field]" :options="[
+                            { label: 'Yes', value: 1 },
+                            { label: 'No', value: 0 },
+                        ]" optionLabel="label" optionValue="value" class="w-full" />
                     </template>
                 </Column>
 
-                <Column
-                    field="featured_banner_text"
-                    header="Featured Banner Text"
-                    style="min-width: 200px"
-                >
+                <Column field="featured_banner_text" header="Featured Banner Text" style="min-width: 200px">
                     <template #body="{ data }">
-                        <span
-                            v-html="autoLink(data.featured_banner_text)"
-                            class="text-sm"
-                        ></span>
+                        <span v-html="autoLink(data.featured_banner_text)" class="text-sm"></span>
                     </template>
                     <template #editor="{ data, field }">
-                        <Textarea
-                            v-model="data[field]"
-                            class="w-full"
-                            rows="3"
-                            autoResize
-                            autofocus
-                        />
+                        <Textarea v-model="data[field]" class="w-full" rows="3" autoResize autofocus />
                     </template>
                 </Column>
 
-                <Column
-                    field="sku_in_category_creative"
-                    header="SKU in Category Creative"
-                    style="min-width: 200px"
-                >
+                <Column field="sku_in_category_creative" header="SKU in Category Creative" style="min-width: 200px">
                     <template #body="{ data }">
-                        <span
-                            v-html="
-                                formatMultiline(data.sku_in_category_creative)
-                            "
-                            class="text-sm"
-                        ></span>
+                        <span v-html="formatMultiline(data.sku_in_category_creative)
+                            " class="text-sm"></span>
                     </template>
                     <template #editor="{ data, field }">
-                        <Textarea
-                            v-model="data[field]"
-                            class="w-full"
-                            rows="3"
-                            autoResize
-                            autofocus
-                        />
+                        <Textarea v-model="data[field]" class="w-full" rows="3" autoResize autofocus />
                     </template>
                 </Column>
 
-                <Column
-                    field="url_text"
-                    header="URL Text"
-                    style="min-width: 180px"
-                >
+                <Column field="url_text" header="URL Text" style="min-width: 180px">
                     <template #body="{ data }">
-                        <span
-                            v-html="formatMultiline(data.url_text)"
-                            class="text-sm"
-                        ></span>
+                        <span v-html="formatMultiline(data.url_text)" class="text-sm"></span>
                     </template>
                     <template #editor="{ data, field }">
-                        <Textarea
-                            v-model="data[field]"
-                            class="w-full"
-                            rows="3"
-                            autoResize
-                            autofocus
-                        />
+                        <Textarea v-model="data[field]" class="w-full" rows="3" autoResize autofocus />
                     </template>
                 </Column>
 
                 <!-- Frozen right -->
-                <Column
-                    header="Actions"
-                    frozen
-                    alignFrozen="right"
-                    style="min-width: 160px"
-                >
+                <Column header="Actions" frozen alignFrozen="right" style="min-width: 160px">
                     <template #body="{ data }">
                         <div class="flex gap-1">
-                            <Button
-                                icon="pi pi-refresh"
-                                v-if="isCompleted(data)"
-                                label="Re-run Campaign"
-                                severity="warn"
-                                size="small"
-                                raised
-                                @click="openRerunModal(data)"
-                            />
+                            <Button icon="pi pi-refresh" v-if="isCompleted(data)" label="Re-run Campaign"
+                                severity="warn" size="small" raised @click="openRerunModal(data)" />
                         </div>
                     </template>
                 </Column>
@@ -403,45 +210,17 @@
         </div>
 
         <!-- Re-run Modal — unchanged -->
-        <Dialog
-            v-model:visible="rerunModalVisible"
-            header="Re-run Campaign"
-            :modal="true"
-            :closable="true"
-            class="w-96"
-        >
+        <Dialog v-model:visible="rerunModalVisible" header="Re-run Campaign" :modal="true" :closable="true"
+            class="w-96">
             <div class="flex flex-col gap-3">
                 <label class="font-semibold">New Start Date</label>
-                <DatePicker
-                    v-model="newStartDate"
-                    showTime
-                    hourFormat="12"
-                    stepMinute="1"
-                    stepSecond="1"
-                    fluid
-                />
+                <DatePicker v-model="newStartDate" showTime hourFormat="12" stepMinute="1" stepSecond="1" fluid />
                 <label class="font-semibold">New End Date</label>
-                <DatePicker
-                    v-model="newEndDate"
-                    showTime
-                    hourFormat="12"
-                    stepMinute="1"
-                    stepSecond="1"
-                    fluid
-                />
+                <DatePicker v-model="newEndDate" showTime hourFormat="12" stepMinute="1" stepSecond="1" fluid />
                 <div class="mt-4 flex justify-end gap-2">
-                    <Button
-                        label="Cancel"
-                        icon="pi pi-times"
-                        class="p-button-secondary"
-                        @click="rerunModalVisible = false"
-                    />
-                    <Button
-                        label="Submit"
-                        icon="pi pi-check"
-                        class="p-button-success"
-                        @click="submitRerunCampaign"
-                    />
+                    <Button label="Cancel" icon="pi pi-times" class="p-button-secondary"
+                        @click="rerunModalVisible = false" />
+                    <Button label="Submit" icon="pi pi-check" class="p-button-success" @click="submitRerunCampaign" />
                 </div>
             </div>
         </Dialog>
@@ -712,4 +491,18 @@ onMounted(async () => {
     loading.value = false;
 });
 </script>
-<style scoped></style>
+<style scoped>
+:deep(.p-datatable-wrapper) {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+}
+
+:deep(.p-datatable-table) {
+    min-width: max-content !important;
+}
+
+:deep(.p-datatable-scrollable .p-datatable-thead > tr > th),
+:deep(.p-datatable-scrollable .p-datatable-tbody > tr > td) {
+    flex: unset !important;
+}
+</style>
