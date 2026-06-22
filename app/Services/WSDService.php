@@ -12,207 +12,107 @@ class WSDService
 {
     public function all()
     {
-        return DB::table('website_campaigns as wc')
-            ->leftJoin('website_sale_details as wsd', 'wc.wc_id', '=', 'wsd.wc_id')
-            ->join('website_campaign_types as wct', 'wc.campaign_type_id', '=', 'wct.campaign_type_id')
-            ->join('stores as s', 'wc.store_id', '=', 's.store_id')
-            ->where(function ($query) {
-                $query->where('wct.campaign_type_name', 'Website Sale')
-                    ->orWhere('wc.campaign_type_id', 'Website Sale');
-            })
-            ->select(
-                'wc.wc_id as campaign_id',
-                'wc.name as name',
-                'wc.start_date',
-                'wc.end_date',
-                's.store_name as store_name',
-                'wct.campaign_type_name as campaign_type',
-                'wsd.wsd_id as wsd_id',
-                'wsd.terms_conditions',
-                'wsd.mockup_banner_locations',
-                'wsd.mockup_banner_img',                         
-                'wsd.event_master_sheet_url as event_master_sheet',
-                'wsd.run_sheet_url as run_sheet',
-                'wsd.is_sku_list_to_feature',
-                'wsd.featured_products_sheet_url',
-                'wsd.ess',
-                'wsd.cms_to_audit',
-                'wsd.sku_in_category_creative',
-                'wsd.featured_banner_text',
-                'wsd.url_text'
-            )
-            ->orderBy('wc.start_date', 'asc')
+        return DB::table('website_sale_details')
+            ->orderBy('start_date', 'asc')
             ->get()
-            ->map(function ($row) {
-                // Resolve mock_banner_img to a full public URL
-                if ($row->mockup_banner_img) {
-                    $row->mockup_banner_img = asset('storage/' . $row->mockup_banner_img);
-                }
-                return $row;
-            });
+            ->map(fn ($row) => $this->resolveBannerImage($row));
     }
 
-    public function find(string $id)
+    public function find(string $wsdId)
     {
-        return DB::table('website_sale_details')->where('wsd_id', $id)->first();
+        return DB::table('website_sale_details')->where('wsd_id', $wsdId)->first();
     }
 
-    public function create(array $data)
+    public function findByEvent(string $eventName, string $channelName, ?string $startDate)
     {
+        return DB::table('website_sale_details')
+            ->where('event_name', $eventName)
+            ->where('channel_name', $channelName)
+            ->where('start_date', $startDate)
+            ->first();
+    }
+
+    /**
+     * Create or update a WSD record. Upsert is keyed on
+     * event_name + channel_name + start_date (treated as "the same event run").
+     */
+    public function upsert(array $data)
+    {
+        if (empty($data['event_name']) || empty($data['channel_name'])) {
+            throw new \InvalidArgumentException('event_name and channel_name are required.');
+        }
+
         try {
-            $existing = DB::table('website_sale_details')
-                ->where('wc_id', $data['wc_id'])
-                ->first();
-
-            $campaign = DB::table('website_campaigns')
-                ->where('wc_id', $data['wc_id'])
-                ->first();
-
-            $formattedEndDate = $campaign && $campaign->end_date
-                ? Carbon::parse($campaign->end_date)->format('jS F Y')
-                : 'TBA';
-
-            if (!isset($data['terms_conditions']) || $data['terms_conditions'] === null) {
-                $data['terms_conditions'] = "Offer ends 11.59 PM AEDT {$formattedEndDate}. Cannot be combined with any other offer. Prices may change without notice.";
-            }
-
-            if (!isset($data['is_sku_list_to_feature']) || $data['is_sku_list_to_feature'] === null) {
-                $data['is_sku_list_to_feature'] = 1;
-            }
-
-            $fields = [
-                'ess',
-                'cms_to_audit',
-                'mockup_banner_locations',
-                'event_master_sheet_url',
-                'run_sheet_url',
-                'featured_products_sheet_url',
-                'sku_in_category_creative',
-                'featured_banner_text',
-                'url_text',
-            ];
-
-            foreach ($fields as $field) {
-                $data[$field] = $data[$field] ?? '';
-            }
+            $existing = $this->findByEvent($data['event_name'], $data['channel_name'], $data['start_date'] ?? null);
+            $data = $this->applyDefaults($data);
 
             if ($existing) {
-                DB::table('website_sale_details')
-                    ->where('wsd_id', $existing->wsd_id)
-                    ->update($data);
-
-                return DB::table('website_sale_details')
-                    ->where('wsd_id', $existing->wsd_id)
-                    ->first();
+                DB::table('website_sale_details')->where('wsd_id', $existing->wsd_id)->update($data);
+                return $this->find($existing->wsd_id);
             }
 
             $data['wsd_id'] = Str::uuid()->toString();
             DB::table('website_sale_details')->insert($data);
 
-            return $data;
-
+            return $this->find($data['wsd_id']);
         } catch (\Throwable $e) {
-            Log::error('Website Sale Details upsert failed', [
-                'error' => $e->getMessage(),
-                'data'  => $data,
-            ]);
-            throw new \Exception('Failed to create Website Sale Details: ' . $e->getMessage());
+            Log::error('WSD upsert failed', ['error' => $e->getMessage(), 'data' => $data]);
+            throw new \RuntimeException('Failed to save Website Sale Details: ' . $e->getMessage());
         }
     }
 
-    public function update(string $id, array $data)
+    public function update(string $wsdId, array $data)
     {
-        $data = array_filter($data, fn($value) => !is_null($value));
+        $data = array_filter($data, fn ($value) => !is_null($value));
+        DB::table('website_sale_details')->where('wsd_id', $wsdId)->update($data);
 
-        return DB::table('website_sale_details')->where('wsd_id', $id)->update($data);
+        return $this->find($wsdId);
     }
 
-    public function delete(string $id)
+    public function delete(string $wsdId)
     {
-        return DB::table('website_sale_details')->where('wsd_id', $id)->delete();
+        return DB::table('website_sale_details')->where('wsd_id', $wsdId)->delete();
     }
 
-    public function blank_record(string $wc_id)
+    public function blankRecord(string $eventName, string $channelName, ?string $startDate = null, ?string $endDate = null)
     {
-        $campaign = DB::table('website_campaigns')->where('wc_id', $wc_id)->first();
-
-        $formattedEndDate = $campaign && $campaign->end_date
-            ? Carbon::parse($campaign->end_date)->format('jS F Y')
-            : 'TBA';
-
-        $data = [
-            'wc_id'  => $wc_id,
-            'wsd_id' => Str::uuid()->toString(),
-        ];
-
-        $defaultFields = [
-            'ess',
-            'cms_to_audit',
-            'terms_conditions',
-            'mockup_banner_locations',
-            'mockup_banner_img',              // ← new (blank by default)
-            'event_master_sheet_url',
-            'run_sheet_url',
-            'sku_in_category_creative',
-            'is_sku_list_to_feature',
-            'featured_banner_text',
-            'url_text',
-        ];
-
-        foreach ($defaultFields as $field) {
-            if ($field === 'terms_conditions') {
-                $data[$field] = "Offer ends 11.59 PM AEDT {$formattedEndDate}. Cannot be combined with any other offer. Prices may change without notice.";
-            } elseif ($field === 'is_sku_list_to_feature') {
-                $data[$field] = 1;
-            } elseif ($field === 'mockup_banner_img') {
-                $data[$field] = null;
-            } else {
-                $data[$field] = '';
-            }
-        }
-
-        return $data;
+        return array_merge(
+            [
+                'wsd_id' => Str::uuid()->toString(),
+                'event_name' => $eventName,
+                'channel_name' => $channelName,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ],
+            $this->defaultFields($endDate)
+        );
     }
 
-    // ─── Image methods ────────────────────────────────────────────────────────
+    // ─── Banner image ──────────────────────────────────────────────────────
+    // Now keyed directly by wsd_id — no more campaign lookup needed.
 
-    /**
-     * Upload and store mock_banner_img for a given wc_id.
-     * Returns the public URL of the stored image.
-     */
-    public function uploadImage(string $wcId, \Illuminate\Http\UploadedFile $file): string
+    public function uploadImage(string $wsdId, \Illuminate\Http\UploadedFile $file): string
     {
-        $existing = DB::table('website_sale_details')
-            ->where('wc_id', $wcId)
-            ->first();
+        $existing = $this->find($wsdId);
 
         if (!$existing) {
-            throw new \Exception("No WSD record found for wc_id: {$wcId}");
+            throw new \RuntimeException("No Website Sale Details record found for {$wsdId}.");
         }
 
-        // Delete old image from storage if it exists
         if ($existing->mockup_banner_img) {
             Storage::disk('public')->delete($existing->mockup_banner_img);
         }
 
-        // Store new image — path: wsd/banners/{wc_id}/{filename}
-        $path = $file->store("wsd/banners/{$wcId}", 'public');
+        $path = $file->store("wsd/banners/{$wsdId}", 'public');
 
-        DB::table('website_sale_details')
-            ->where('wsd_id', $existing->wsd_id)
-            ->update(['mockup_banner_img' => $path]);
+        DB::table('website_sale_details')->where('wsd_id', $wsdId)->update(['mockup_banner_img' => $path]);
 
         return asset('storage/' . $path);
     }
 
-    /**
-     * Delete mock_banner_img for a given wc_id.
-     */
-    public function deleteImage(string $wcId): void
+    public function deleteImage(string $wsdId): void
     {
-        $existing = DB::table('website_sale_details')
-            ->where('wc_id', $wcId)
-            ->first();
+        $existing = $this->find($wsdId);
 
         if (!$existing || !$existing->mockup_banner_img) {
             return;
@@ -220,8 +120,51 @@ class WSDService
 
         Storage::disk('public')->delete($existing->mockup_banner_img);
 
-        DB::table('website_sale_details')
-            ->where('wsd_id', $existing->wsd_id)
-            ->update(['mockup_banner_img' => null]);
+        DB::table('website_sale_details')->where('wsd_id', $wsdId)->update(['mockup_banner_img' => null]);
+    }
+
+    // ─── Internals ─────────────────────────────────────────────────────────
+
+    protected function applyDefaults(array $data): array
+    {
+        $defaults = $this->defaultFields($data['end_date'] ?? null);
+
+        foreach ($defaults as $field => $defaultValue) {
+            if (!array_key_exists($field, $data) || $data[$field] === null) {
+                $data[$field] = $defaultValue;
+            }
+        }
+
+        unset($data['wsd_id']);
+        return $data;
+    }
+
+    protected function defaultFields(?string $endDate): array
+    {
+        $formattedEndDate = $endDate ? Carbon::parse($endDate)->format('jS F Y') : 'TBA';
+
+        return [
+            'terms_conditions' => "Offer ends 11.59 PM AEDT {$formattedEndDate}. Cannot be combined with any other offer. Prices may change without notice.",
+            'mockup_banner_locations' => '',
+            'mockup_banner_img' => null,
+            'event_master_sheet_url' => '',
+            'run_sheet_url' => '',
+            'featured_products_sheet_url' => '',
+            'is_sku_list_to_feature' => 0,
+            'ess' => '',
+            'cms_to_audit' => '',
+            'sku_in_category_creative' => '',
+            'featured_banner_text' => '',
+            'url_text' => '',
+        ];
+    }
+
+    protected function resolveBannerImage($row)
+    {
+        if ($row->mockup_banner_img) {
+            $row->mockup_banner_img = asset('storage/' . $row->mockup_banner_img);
+        }
+
+        return $row;
     }
 }

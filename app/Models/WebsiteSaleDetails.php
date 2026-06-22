@@ -11,10 +11,13 @@ class WebsiteSaleDetails extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'wc_id',
+        'event_name',
+        'channel_name',
+        'start_date',
+        'end_date',
         'terms_conditions',
         'mockup_banner_locations',
-        'mockup_banner_img',  
+        'mockup_banner_img',
         'featured_products_sheet_url',
         'event_master_sheet_url',
         'run_sheet_url',
@@ -23,12 +26,8 @@ class WebsiteSaleDetails extends Model
         'cms_to_audit',
         'featured_banner_text',
         'sku_in_category_creative',
-        'url_text'
+        'url_text',
     ];
 
-
-    public function websiteCampaign()
-    {
-        return $this->belongsTo(WebsiteCampaign::class, 'wc_id', 'wc_id');
-    }
+    // websiteCampaign() relationship removed — no FK to website_campaigns anymore
 }

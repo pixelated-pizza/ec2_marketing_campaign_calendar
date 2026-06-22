@@ -2,36 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\CreateWSDRequest;
+use App\Http\Requests\StoreWSDRequest;
+use App\Http\Requests\UpdateWSDRequest;
 use App\Services\WSDService;
-
 use Illuminate\Http\Request;
 
 class WebsiteSaleDetailsController extends Controller
 {
-
-    protected $service;
-
-    public function __construct(WSDService $service)
+    public function __construct(protected WSDService $service)
     {
-        $this->service = $service;
     }
+
     public function index()
     {
         return response()->json($this->service->all());
-    }
-
-    public function store(CreateWSDRequest $request)
-    {
-        $data = $request->validated();
-
-        $wsd = $this->service->create($data);
-
-        if (!$wsd) {
-            return response()->json(['message' => 'Failed to create Website Sale Details'], 500);
-        }
-
-        return response()->json($wsd, 201);
     }
 
     public function show(string $id)
@@ -39,20 +23,27 @@ class WebsiteSaleDetailsController extends Controller
         $wsd = $this->service->find($id);
 
         if (!$wsd) {
-            return response()->json(['message' => 'Website Sale Details not found'], 404);
+            return response()->json(['message' => 'Website Sale Details not found.'], 404);
         }
 
         return response()->json($wsd);
     }
 
-    public function update(CreateWSDRequest $request, string $id)
+    public function store(StoreWSDRequest $request)
     {
-        $data = $request->validated();
+        try {
+            return response()->json($this->service->upsert($request->validated()));
+        } catch (\Throwable $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
 
-        $wsd = $this->service->update($id, $data);
+    public function update(UpdateWSDRequest $request, string $id)
+    {
+        $wsd = $this->service->update($id, $request->validated());
 
         if (!$wsd) {
-            return response()->json(['message' => 'Website Sale Details not found'], 404);
+            return response()->json(['message' => 'Website Sale Details not found.'], 404);
         }
 
         return response()->json($wsd);
@@ -61,54 +52,50 @@ class WebsiteSaleDetailsController extends Controller
     public function destroy(string $id)
     {
         if (!$this->service->delete($id)) {
-            return response()->json(['message' => 'Website Sale Details not found'], 404);
+            return response()->json(['message' => 'Website Sale Details not found.'], 404);
         }
 
-        return response()->json(['message' => 'Deleted']);
+        return response()->json(['message' => 'Deleted.']);
     }
 
-    public function blank(string $wc_id)
-    {
-        $blank = $this->service->blank_record($wc_id);
-
-        return response()->json([
-            'message' => 'Blank Website Sale Details template generated',
-            'data' => $blank
-        ]);
-    }
-
-    public function uploadImage(Request $request, string $wc_id)
+    public function blank(Request $request)
     {
         $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'event_name' => 'required|string',
+            'channel_name' => 'required|string',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
         ]);
 
-        try {
-            $url = $this->service->uploadImage($wc_id, $request->file('image'));
+        return response()->json([
+            'message' => 'Blank Website Sale Details template generated.',
+            'data' => $this->service->blankRecord(
+                $request->input('event_name'),
+                $request->input('channel_name'),
+                $request->input('start_date'),
+                $request->input('end_date'),
+            ),
+        ]);
+    }
 
-            return response()->json([
-                'success' => true,
-                'url'     => $url,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 422);
+    public function uploadImage(Request $request, string $wsdId)
+    {
+        $request->validate(['image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120']);
+
+        try {
+            return response()->json(['success' => true, 'url' => $this->service->uploadImage($wsdId, $request->file('image'))]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }
 
-    public function deleteImage(string $wc_id)
+    public function deleteImage(string $wsdId)
     {
         try {
-            $this->service->deleteImage($wc_id);
-
+            $this->service->deleteImage($wsdId);
             return response()->json(['success' => true]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 422);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }
 }

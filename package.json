@@ -45,6 +45,7 @@
         "frappe-gantt": "^1.0.4",
         "jsgantt-improved": "^2.8.10",
         "lucide-vue-next": "^0.546.0",
+        "papaparse": "^5.5.3",
         "pinia": "^3.0.3",
         "primeflex": "^4.0.0",
         "primeicons": "^7.0.0",

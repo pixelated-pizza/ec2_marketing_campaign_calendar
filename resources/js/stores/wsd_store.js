@@ -5,6 +5,8 @@ import {
     updateWSD,
     deleteWSD,
     fetchBlankWSD,
+    previewImportWSD,
+    commitImportWSD,
 } from "@/js/api/wsd_api.js";
 
 export const useWSDStore = defineStore("wsd", {
@@ -17,11 +19,7 @@ export const useWSDStore = defineStore("wsd", {
     }),
 
     actions: {
-        // Load WSD with caching
         async loadWSD(force = false) {
-            const STALE_MS = 5 * 60 * 1000;
-            const isStale =
-                !this.lastFetched || Date.now() - this.lastFetched > STALE_MS;
             if (this.loaded && !force) return;
 
             this.loading = true;
@@ -43,18 +41,11 @@ export const useWSDStore = defineStore("wsd", {
                     return {
                         ...c,
                         status,
-                        statusOrder: {
-                            RUNNING: 1,
-                            UPCOMING: 2,
-                            ENDED: 3,
-                        }[status],
+                        statusOrder: { RUNNING: 1, UPCOMING: 2, ENDED: 3 }[status],
                     };
                 });
-
-                this.loaded = true; // mark cache valid
             } catch (err) {
-                this.error =
-                    err.message || "Failed to load website sale details.";
+                this.error = err.message || "Failed to load website sale details.";
             } finally {
                 this.loading = false;
             }
@@ -67,51 +58,49 @@ export const useWSDStore = defineStore("wsd", {
             this.websiteSaleDetails = [];
         },
 
+        // Create or update — keyed by event_name + channel_name + start_date on the backend.
         async addWSD(newData) {
-            const created = await createWSD(newData);
+            const saved = await createWSD(newData);
 
-            const index = this.websiteSaleDetails.findIndex(
-                (w) =>
-                    (w.wc_id ?? w.campaign_id) ===
-                    (created.wc_id ?? created.campaign_id),
-            );
+            const index = this.websiteSaleDetails.findIndex((w) => w.wsd_id === saved.wsd_id);
 
             if (index !== -1) {
-                this.websiteSaleDetails[index] = {
-                    ...this.websiteSaleDetails[index],
-                    ...created,
-                };
+                this.websiteSaleDetails[index] = { ...this.websiteSaleDetails[index], ...saved };
             } else {
-                this.websiteSaleDetails.push(created);
+                this.websiteSaleDetails.push(saved);
             }
+            return saved;
         },
 
         async updateWSD(wsd_id, updates) {
             const updated = await updateWSD(wsd_id, updates);
-            const index = this.websiteSaleDetails.findIndex(
-                (w) => w.wsd_id === wsd_id,
-            );
+            const index = this.websiteSaleDetails.findIndex((w) => w.wsd_id === wsd_id);
             if (index !== -1) this.websiteSaleDetails[index] = updated;
             return updated;
         },
 
         async removeWSD(id) {
             await deleteWSD(id);
-            this.websiteSaleDetails = this.websiteSaleDetails.filter(
-                (w) => w.wsd_id !== id,
-            );
+            this.websiteSaleDetails = this.websiteSaleDetails.filter((w) => w.wsd_id !== id);
         },
 
-        async getBlankWSD(wc_id) {
-            return await fetchBlankWSD(wc_id);
+        async getBlankWSD(params) {
+            return await fetchBlankWSD(params);
         },
 
-        async rerunCampaign(id, newStartDate, newEndDate) {
-            const updates = {
-                start_date: newStartDate,
-                end_date: newEndDate,
-            };
-            return await this.updateWSD(id, updates);
+        // Re-run now just shifts dates on the same WSD row — no campaigns module involved.
+        async rerunCampaign(wsd_id, newStartDate, newEndDate) {
+            return await this.updateWSD(wsd_id, { start_date: newStartDate, end_date: newEndDate });
+        },
+
+        async previewImport(rows) {
+            return await previewImportWSD(rows);
+        },
+
+        async commitImport(rows) {
+            const result = await commitImportWSD(rows);
+            await this.loadWSD(true);
+            return result;
         },
     },
 });
