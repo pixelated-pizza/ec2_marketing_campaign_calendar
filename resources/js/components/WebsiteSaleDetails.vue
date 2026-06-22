@@ -54,9 +54,11 @@
             <DataTable :value="filteredCampaigns" dataKey="wsd_id" showGridlines scrollable scrollDirection="both"
                 scrollHeight="flex" size="small" class="text-md mt-5" editMode="cell"
                 @cell-edit-complete="onCellEditComplete" :rowClass="rowClass" paginator :rows="15" :loading="loading">
-                <Column header="Status" frozen sortable sortField="statusOrder" style="min-width: 110px">
+                <Column header="Status" frozen sortable sortField="statusOrder" style="min-width: 100px">
                     <template #body="{ data }">
-                        <Badge :value="data.status" :severity="getSeverity(data.status)" class="font-semibold" />
+                        <span class="font-semibold text-xs px-1" :class="statusTextClass(data.status)">
+                            {{ data.status }}
+                        </span>
                     </template>
                 </Column>
                 <Column field="channel_name" header="Channel" frozen style="min-width: 150px">
@@ -483,6 +485,15 @@ const submitNewEvent = async () => {
     }
 };
 
+const statusTextClass = (status) => {
+    switch (status) {
+        case "RUNNING": return "text-green-500";
+        case "ENDED": return "text-red-400";
+        case "UPCOMING": return "text-amber-400";
+        default: return "text-gray-400";
+    }
+};
+
 const onImported = async (result) => {
     if (!result) return;
     toastr.success(`${result.details_saved} saved, ${result.skipped} skipped.`);
@@ -512,10 +523,69 @@ onUnmounted(() => {
 
 :deep(.p-datatable-table) {
     min-width: max-content !important;
+    border-collapse: collapse;
 }
 
 :deep(.p-datatable-scrollable .p-datatable-thead > tr > th),
 :deep(.p-datatable-scrollable .p-datatable-tbody > tr > td) {
     flex: unset !important;
+}
+
+/* Header row — flat, bold, spreadsheet-style */
+:deep(.p-datatable-thead > tr > th) {
+    background: #f1f3f4;
+    color: #202124;
+    font-weight: 600;
+    font-size: 0.78rem;
+    border: 1px solid #d0d3d6 !important;
+    padding: 6px 10px !important;
+    white-space: nowrap;
+}
+
+.dark :deep(.p-datatable-thead > tr > th) {
+    background: #2a2d31;
+    color: #e8eaed;
+    border: 1px solid #3c4043 !important;
+}
+
+/* Body cells — tight padding, visible grid, no zebra striping */
+:deep(.p-datatable-tbody > tr > td) {
+    border: 1px solid #e0e0e0 !important;
+    padding: 3px 10px !important;
+    font-size: 0.8rem;
+    line-height: 1.3;
+}
+
+.dark :deep(.p-datatable-tbody > tr > td) {
+    border: 1px solid #3c4043 !important;
+}
+
+:deep(.row-even),
+:deep(.row-odd) {
+    background: transparent !important;
+}
+
+:deep(.p-datatable-tbody > tr:hover) {
+    background: rgba(66, 133, 244, 0.08) !important;
+}
+
+/* Frozen column divider — mimics Excel's frozen-pane split */
+:deep(.p-datatable-frozen-column) {
+    box-shadow: 2px 0 4px -2px rgba(0, 0, 0, 0.35);
+}
+
+/* Cell editors sized to match the compact rows */
+:deep(.p-datatable-tbody > tr > td .p-inputtext),
+:deep(.p-datatable-tbody > tr > td .p-select),
+:deep(.p-datatable-tbody > tr > td .p-textarea) {
+    font-size: 0.8rem;
+    padding: 2px 6px;
+}
+
+/* Sticky header on vertical scroll */
+:deep(.p-datatable-thead) {
+    position: sticky;
+    top: 0;
+    z-index: 2;
 }
 </style>
