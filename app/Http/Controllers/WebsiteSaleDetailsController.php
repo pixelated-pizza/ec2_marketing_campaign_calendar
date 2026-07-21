@@ -9,9 +9,7 @@ use Illuminate\Http\Request;
 
 class WebsiteSaleDetailsController extends Controller
 {
-    public function __construct(protected WSDService $service)
-    {
-    }
+    public function __construct(protected WSDService $service) {}
 
     public function index()
     {
@@ -96,6 +94,19 @@ class WebsiteSaleDetailsController extends Controller
             return response()->json(['success' => true]);
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function destroyAll()
+    {
+        try {
+            $counts = $this->service->deleteAll();
+            return response()->json([
+                'message' => "Deleted {$counts['wsd']} WSD, {$counts['website_campaigns']} website campaigns, {$counts['campaigns']} campaigns.",
+                'counts'  => $counts,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
 }

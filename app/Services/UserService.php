@@ -103,7 +103,10 @@ class UserService
     }
     public function all(): Collection
     {
-        return User::get();
+        return User::query()
+            ->leftJoin('roles', 'roles.role_id', '=', 'users.role_id')
+            ->select('users.*', 'roles.role_name')
+            ->get();
     }
 
     public function find(int $id): ?User

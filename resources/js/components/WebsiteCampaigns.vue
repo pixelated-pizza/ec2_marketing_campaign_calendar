@@ -1128,7 +1128,7 @@ const isEditingDuplicateName = computed(() => {
             c.name === form.value.name &&
             c.wc_id !== editTargetId.value
     );
-    // If another campaign with the same name exists, hide checkbox
+
     return sameNameCampaigns.length > 0;
 });
 

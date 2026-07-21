@@ -1,15 +1,14 @@
 <template>
-  <div
-    class="apex-wrapper mt-5 p-5"
-    :style="{ background: isDark ? '#000524' : '#ffffff' }"
-  >
-    <apexchart
-      v-if="chartReady"
-      type="bar"
-      height="200"
-      :options="chartOptions"
-      :series="series"
-    />
+  <div class="apex-wrapper p-5" :style="{ background: isDark ? '#000524' : '#ffffff' }">
+    <div class="range-toggle mb-3">
+      <button v-for="opt in rangeOptions" :key="opt.value" class="range-btn"
+        :class="{ active: selectedRange === opt.value }" :style="rangeBtnStyle(opt.value)"
+        @click="selectedRange = opt.value">
+        {{ opt.label }}
+      </button>
+    </div>
+
+    <apexchart v-if="chartReady" type="bar" height="300" :options="chartOptions" :series="series" />
   </div>
 </template>
 
@@ -25,6 +24,22 @@ const props = defineProps({
     required: true
   }
 });
+
+const rangeOptions = [
+  { label: "6 months", value: 6 },
+  { label: "12 months", value: 12 },
+  // { label: "All", value: "all" }
+];
+const selectedRange = ref(12);
+
+function rangeBtnStyle(value) {
+  const active = selectedRange.value === value;
+  return {
+    background: active ? "#00BAEC" : "transparent",
+    color: active ? "#fff" : isDark.value ? "#d1d5db" : "#374151",
+    border: `1px solid ${active ? "#00BAEC" : isDark.value ? "#374151" : "#e5e7eb"}`
+  };
+}
 
 function buildCompletedCampaignCount(campaigns) {
   const map = {};
@@ -73,9 +88,20 @@ function buildCompletedCampaignCount(campaigns) {
     });
 }
 
+const allProcessed = ref([]);
 const series = ref([{ name: "Completed Campaigns", data: [] }]);
 
-// Force chart remount on theme change so ApexCharts picks up new options
+// Slice the processed data to the selected range and refresh series
+const applyRange = () => {
+  const data =
+    selectedRange.value === "all"
+      ? allProcessed.value
+      : allProcessed.value.slice(-selectedRange.value);
+  series.value = [{ name: "Completed Campaigns", data }];
+};
+
+watch(selectedRange, applyRange);
+
 async function forceChartRemount() {
   chartReady.value = false;
   await nextTick();
@@ -106,31 +132,30 @@ const chartOptions = computed(() => {
   const tooltipBorder = isDark.value ? "#374151" : "#e5e7eb";
   const tooltipText = isDark.value ? "#fff" : "#111827";
 
+  // fewer bars visible -> wider columns; more bars -> narrower
+  const barCount = series.value[0]?.data?.length || 1;
+  const columnWidth = barCount <= 12 ? "40%" : barCount <= 24 ? "55%" : "70%";
+
   return {
     chart: {
       type: "bar",
-      foreColor: textColor, // ← adapts axis labels, legend text
-      toolbar: { show: false },
-      zoom: { enabled: true },
+      foreColor: textColor,
+      toolbar: {
+        show: true,
+        tools: { download: false, selection: false, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true }
+      },
+      zoom: { enabled: true, type: "x" },
       background: "transparent"
     },
 
     title: {
-      text: "Website Sales or Promotions Currently Running or Completed Per Month",
+      text: "Website Sales or Promotions Completed Per Month",
       align: "center",
-      style: {
-        fontSize: "16px",
-        fontWeight: "600",
-        color: textColor // ← was hardcoded #ffffff
-      }
+      style: { fontSize: "16px", fontWeight: "600", color: textColor }
     },
 
     plotOptions: {
-      bar: {
-        borderRadius: 6,
-        horizontal: false,
-        columnWidth: "50%"
-      }
+      bar: { borderRadius: 6, horizontal: false, columnWidth }
     },
 
     dataLabels: { enabled: false },
@@ -138,20 +163,24 @@ const chartOptions = computed(() => {
 
     xaxis: {
       type: "category",
-      title: {
-        text: "Month",
-        style: { color: textColor }
-      },
-      labels: { style: { colors: textColor } }
+      title: { text: "Month", style: { color: textColor } },
+      labels: {
+        style: { colors: textColor, fontSize: "12px" },
+        rotate: -45,
+        rotateAlways: barCount > 8,
+        trim: true,
+        hideOverlappingLabels: true
+      }
     },
 
     yaxis: {
       min: 0,
-      title: {
-        text: "Completed Campaigns",
-        style: { color: textColor }
-      },
-      labels: { style: { colors: textColor } }
+      forceNiceScale: true,
+      title: { text: "Completed Campaigns", style: { color: textColor } },
+      labels: {
+        style: { colors: textColor },
+        formatter: (val) => Math.round(val)
+      }
     },
 
     tooltip: {
@@ -165,24 +194,42 @@ const chartOptions = computed(() => {
           .join("");
 
         return `
-          <div style="
-            padding: 8px;
-            color: ${tooltipText};
-            background: ${tooltipBg};
-            border-radius: 6px;
-            font-size: 13px;
-            border: 1px solid ${tooltipBorder};
-          ">
-            <strong>Count: ${dp.y}</strong>
-            <ul style="margin: 5px 0 0 15px; padding: 0; list-style-type: disc;">
-              ${campaignList}
-            </ul>
-          </div>
-        `;
+      <div style="
+        padding: 10px 12px;
+        color: ${tooltipText};
+        background: ${tooltipBg};
+        border-radius: 6px;
+        font-size: 13px;
+        border: 1px solid ${tooltipBorder};
+        max-width: 320px;
+        white-space: normal;
+        word-wrap: break-word;
+      ">
+        <strong>Count: ${dp.y}</strong>
+        <ul style="
+          margin: 6px 0 0 15px;
+          padding: 0;
+          list-style-type: disc;
+          line-height: 1.5;
+        ">
+          ${campaignList}
+        </ul>
+      </div>
+    `;
       }
     },
 
-    grid: { borderColor: gridColor }
+    grid: { borderColor: gridColor },
+
+    responsive: [
+      {
+        breakpoint: 768,
+        options: {
+          chart: { height: 300 },
+          xaxis: { labels: { fontSize: "10px" } }
+        }
+      }
+    ]
   };
 });
 
@@ -192,15 +239,34 @@ watch(
     if (!newVal || !newVal.length) return;
     await nextTick();
     setTimeout(() => {
-      const processed = buildCompletedCampaignCount(newVal);
-      series.value = [{ name: "Completed Campaigns", data: processed }];
+      allProcessed.value = buildCompletedCampaignCount(newVal);
+      applyRange();
     }, 0);
   },
   { immediate: true }
 );
 </script>
+
 <style scoped>
 :global(.app-dark) .apex-wrapper {
-  background: #000524; /* dark mode */
+  background: #000524;
+}
+
+.range-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.range-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.range-btn:hover {
+  opacity: 0.85;
 }
 </style>

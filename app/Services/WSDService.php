@@ -15,7 +15,7 @@ class WSDService
         return DB::table('website_sale_details')
             ->orderBy('start_date', 'asc')
             ->get()
-            ->map(fn ($row) => $this->resolveBannerImage($row));
+            ->map(fn($row) => $this->resolveBannerImage($row));
     }
 
     public function find(string $wsdId)
@@ -63,7 +63,7 @@ class WSDService
 
     public function update(string $wsdId, array $data)
     {
-        $data = array_filter($data, fn ($value) => !is_null($value));
+        $data = array_filter($data, fn($value) => !is_null($value));
         DB::table('website_sale_details')->where('wsd_id', $wsdId)->update($data);
 
         return $this->find($wsdId);
@@ -166,5 +166,47 @@ class WSDService
         }
 
         return $row;
+    }
+
+    public function deleteAll(): array
+    {
+       
+        $wsdRows = DB::table('website_sale_details')
+            ->select('event_name', 'channel_name', 'start_date')
+            ->get();
+
+        $deletedCampaigns = 0;
+        $deletedWebsiteCampaigns = 0;
+
+        if ($wsdRows->isNotEmpty()) {
+            $wcQuery = DB::table('website_campaigns');
+            foreach ($wsdRows as $row) {
+                if (!$row->start_date) continue;
+                $wcQuery->orWhere(function ($q) use ($row) {
+                    $q->where('name', $row->event_name)
+                        ->where('start_date', $row->start_date);
+                });
+            }
+            $deletedWebsiteCampaigns = $wcQuery->delete();
+
+            $cQuery = DB::table('campaigns');
+            foreach ($wsdRows as $row) {
+                if (!$row->start_date) continue;
+                $startDateOnly = Carbon::parse($row->start_date)->toDateString();
+                $cQuery->orWhere(function ($q) use ($row, $startDateOnly) {
+                    $q->where('name', $row->event_name)
+                        ->where('start_date', $startDateOnly);
+                });
+            }
+            $deletedCampaigns = $cQuery->delete();
+        }
+
+        $deletedWSD = DB::table('website_sale_details')->delete();
+
+        return [
+            'wsd' => $deletedWSD,
+            'website_campaigns' => $deletedWebsiteCampaigns,
+            'campaigns' => $deletedCampaigns,
+        ];
     }
 }

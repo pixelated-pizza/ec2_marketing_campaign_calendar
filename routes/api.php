@@ -85,6 +85,7 @@ Route::prefix('website_sale_details')->group(function () {
     Route::get('/', [WebsiteSaleDetailsController::class, 'index']);
     Route::post('/', [WebsiteSaleDetailsController::class, 'store']);
     Route::get('/blank', [WebsiteSaleDetailsController::class, 'blank']); // was /blank/{wc_id}
+    Route::delete('/', [WebsiteSaleDetailsController::class, 'destroyAll']);
     Route::get('/{id}', [WebsiteSaleDetailsController::class, 'show']);
     Route::put('/{id}', [WebsiteSaleDetailsController::class, 'update']);
     Route::delete('/{id}', [WebsiteSaleDetailsController::class, 'destroy']);

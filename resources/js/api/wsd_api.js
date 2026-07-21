@@ -53,3 +53,8 @@ export async function commitImportWSD(rows) {
   const { data } = await api.post("website_sale_details/import/commit", { rows });
   return data;
 }
+
+export async function deleteAllWSD() {
+    await api.delete("website_sale_details");
+    return true;
+}

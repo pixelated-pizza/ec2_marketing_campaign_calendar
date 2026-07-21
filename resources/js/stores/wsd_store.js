@@ -7,6 +7,7 @@ import {
     fetchBlankWSD,
     previewImportWSD,
     commitImportWSD,
+    deleteAllWSD,
 } from "@/js/api/wsd_api.js";
 
 export const useWSDStore = defineStore("wsd", {
@@ -101,6 +102,11 @@ export const useWSDStore = defineStore("wsd", {
             const result = await commitImportWSD(rows);
             await this.loadWSD(true);
             return result;
+        },
+        async deleteAll() {
+            await deleteAllWSD();
+            this.websiteSaleDetails = [];
+            this.loaded = false;
         },
     },
 });
