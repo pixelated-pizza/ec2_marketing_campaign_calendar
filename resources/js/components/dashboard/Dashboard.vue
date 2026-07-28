@@ -1,129 +1,157 @@
 <template>
-    <div class="p-5 card min-h-[88vh]">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-            <div class="dark:bg-gray-800/50 bg-white rounded-xl p-5 flex flex-col items-start transition-all duration-200 border border-gray-200 dark:border-gray-700/60 shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 cursor-pointer hover:-translate-y-0.5"
+    <div class="h-full p-6 bg-gray-50 dark:bg-gray-900 font-sans">
+        <!-- Dashboard Header -->
+        <!-- <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
+                    Dashboard
+                </h1>
+            </div>
+            <div
+                class="flex items-center gap-2 self-start sm:self-auto bg-white dark:bg-gray-800 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm text-xs text-gray-600 dark:text-gray-300">
+                <CalendarClock class="w-4 h-4 text-blue-500" />
+                <span>Updated Today</span>
+            </div>
+        </div> -->
+
+        <!-- Metric Stat Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+            <!-- Total Campaigns -->
+            <div class="group bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700/70 shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 cursor-pointer"
                 @click="openModal('total')">
-                <div v-if="loading" class="flex items-center gap-3 w-full">
-                    <Skeleton shape="circle" size="2.5rem" />
+                <div v-if="loading" class="flex items-center gap-3">
+                    <Skeleton shape="circle" size="2.75rem" />
                     <div class="flex flex-col gap-2 w-full">
-                        <Skeleton width="60%" height="1rem" />
-                        <Skeleton width="40%" height="1.5rem" />
+                        <Skeleton width="50%" height="0.875rem" />
+                        <Skeleton width="30%" height="1.5rem" />
                     </div>
                 </div>
-
-                <div v-else class="flex items-center gap-3">
-                    <div class="p-2.5 dark:bg-gray-500/30 bg-gray-100 rounded-lg">
-                        <ListChecks class="w-6 h-6 text-gray-600 dark:text-gray-300" />
-                    </div>
+                <div v-else class="flex items-center justify-between">
                     <div>
-                        <div class="dark:text-gray-400 text-gray-500 text-sm font-medium">
-                            Total Campaigns
-                        </div>
-                        <div class="text-2xl font-bold dark:text-white text-black mt-1">
+                        <span
+                            class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total
+                            Campaigns</span>
+                        <div class="text-3xl font-bold text-gray-900 dark:text-white mt-1">
                             {{ stats.total }}
                         </div>
                     </div>
+                    <div
+                        class="p-3 bg-gray-100 dark:bg-gray-700/50 group-hover:bg-gray-200 dark:group-hover:bg-gray-700 rounded-xl transition-colors">
+                        <ListChecks class="w-6 h-6 text-gray-700 dark:text-gray-200" />
+                    </div>
                 </div>
             </div>
 
-            <div class="dark:bg-gray-800/50 bg-white rounded-xl p-5 flex flex-col items-start transition-all duration-200 border border-gray-200 dark:border-gray-700/60 shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 cursor-pointer hover:-translate-y-0.5"
+            <!-- Active Campaigns -->
+            <div class="group bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700/70 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-600/50 transition-all duration-200 cursor-pointer"
                 @click="openModal('active')">
-                <div v-if="loading" class="flex items-center gap-3 w-full">
-                    <Skeleton shape="circle" size="2.5rem" />
+                <div v-if="loading" class="flex items-center gap-3">
+                    <Skeleton shape="circle" size="2.75rem" />
                     <div class="flex flex-col gap-2 w-full">
-                        <Skeleton width="60%" height="1rem" />
-                        <Skeleton width="40%" height="1.5rem" />
+                        <Skeleton width="50%" height="0.875rem" />
+                        <Skeleton width="30%" height="1.5rem" />
                     </div>
                 </div>
-
-                <div v-else class="flex items-center gap-3">
-                    <div class="p-2.5 dark:bg-green-500/20 bg-green-100 rounded-lg">
-                        <PlayCircle class="w-6 h-6 text-green-600 dark:text-green-400" />
-                    </div>
+                <div v-else class="flex items-center justify-between">
                     <div>
-                        <div class="dark:text-gray-400 text-gray-500 text-sm font-medium">
-                            Current Active Campaigns
-                        </div>
-                        <div class="text-2xl font-bold dark:text-white text-black mt-1">
+                        <span
+                            class="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Ongoing Campaign/s</span>
+                        <div class="text-3xl font-bold text-gray-900 dark:text-white mt-1">
                             {{ stats.active }}
                         </div>
                     </div>
+                    <div
+                        class="p-3 bg-emerald-50 dark:bg-emerald-950/40 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50 rounded-xl transition-colors">
+                        <PlayCircle class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                    </div>
                 </div>
             </div>
 
-            <div class="dark:bg-gray-800/50 bg-white rounded-xl p-5 flex flex-col items-start transition-all duration-200 border border-gray-200 dark:border-gray-700/60 shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 cursor-pointer hover:-translate-y-0.5"
+            <!-- Upcoming -->
+            <div class="group bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700/70 shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600/50 transition-all duration-200 cursor-pointer"
                 @click="openModal('upcoming')">
-                <div v-if="loading" class="flex items-center gap-3 w-full">
-                    <Skeleton shape="circle" size="2.5rem" />
+                <div v-if="loading" class="flex items-center gap-3">
+                    <Skeleton shape="circle" size="2.75rem" />
                     <div class="flex flex-col gap-2 w-full">
-                        <Skeleton width="60%" height="1rem" />
-                        <Skeleton width="40%" height="1.5rem" />
+                        <Skeleton width="50%" height="0.875rem" />
+                        <Skeleton width="30%" height="1.5rem" />
                     </div>
                 </div>
-
-                <div v-else class="flex items-center gap-3">
-                    <div class="p-2.5 dark:bg-blue-500/20 bg-blue-100 rounded-lg">
-                        <CalendarClock class="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    </div>
+                <div v-else class="flex items-center justify-between">
                     <div>
-                        <div class="dark:text-gray-400 text-gray-500 text-sm font-medium">
-                            Upcoming
-                        </div>
-                        <div class="text-2xl font-bold dark:text-white text-black mt-1">
+                        <span
+                            class="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">Upcoming</span>
+                        <div class="text-3xl font-bold text-gray-900 dark:text-white mt-1">
                             {{ stats.upcoming }}
                         </div>
                     </div>
+                    <div
+                        class="p-3 bg-blue-50 dark:bg-blue-950/40 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 rounded-xl transition-colors">
+                        <CalendarClock class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    </div>
                 </div>
             </div>
 
-            <div class="dark:bg-gray-800/50 bg-white rounded-xl p-5 flex flex-col items-start transition-all duration-200 border border-gray-200 dark:border-gray-700/60 shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 cursor-pointer hover:-translate-y-0.5"
+            <!-- Completed -->
+            <div class="group bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700/70 shadow-sm hover:shadow-md hover:border-purple-300 dark:hover:border-purple-600/50 transition-all duration-200 cursor-pointer"
                 @click="openModal('completed')">
-                <div v-if="loading" class="flex items-center gap-3 w-full">
-                    <Skeleton shape="circle" size="2.5rem" />
+                <div v-if="loading" class="flex items-center gap-3">
+                    <Skeleton shape="circle" size="2.75rem" />
                     <div class="flex flex-col gap-2 w-full">
-                        <Skeleton width="60%" height="1rem" />
-                        <Skeleton width="40%" height="1.5rem" />
+                        <Skeleton width="50%" height="0.875rem" />
+                        <Skeleton width="30%" height="1.5rem" />
                     </div>
                 </div>
-
-                <div v-else class="flex items-center gap-3">
-                    <div class="p-2.5 dark:bg-purple-500/20 bg-purple-100 rounded-lg">
-                        <CheckCircle2 class="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                    </div>
+                <div v-else class="flex items-center justify-between">
                     <div>
-                        <div class="dark:text-gray-400 text-gray-500 text-sm font-medium">
-                            Completed
-                        </div>
-                        <div class="text-2xl font-bold dark:text-white text-black mt-1">
+                        <span
+                            class="text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">Completed</span>
+                        <div class="text-3xl font-bold text-gray-900 dark:text-white mt-1">
                             {{ stats.completed }}
                         </div>
+                    </div>
+                    <div
+                        class="p-3 bg-purple-50 dark:bg-purple-950/40 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/50 rounded-xl transition-colors">
+                        <CheckCircle2 class="w-6 h-6 text-purple-600 dark:text-purple-400" />
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="flex flex-row gap-2">
-            <div class="w-1/2 border">
-                <CampaignTimelineChart v-if="!loading" :campaigns="campaigns" />
-
+        <!-- Dashboard Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Timeline Chart Card -->
+            <div
+                class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700/70 shadow-sm overflow-hidden flex flex-col">
+                <div
+                    class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between">
+                    <h3 class="font-semibold text-gray-900 dark:text-white !text-lg">Website Sales and Promotions Completed Per Month</h3>
+                </div>
+                <div class="p-6 flex-1 flex flex-col justify-center">
+                    <div v-if="loading" class="flex flex-col gap-3">
+                        <Skeleton height="12rem" width="100%" borderRadius="12px" />
+                    </div>
+                    <CampaignTimelineChart v-else :campaigns="campaigns" />
+                </div>
             </div>
-            <div class="w-1/2 border">
-                <div>
+
+            <!-- Promotions Panel Card -->
+            <div
+                class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700/70 shadow-sm overflow-hidden flex flex-col">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/60">
+                    <h3 class="font-semibold text-gray-900 dark:text-white !text-lg">Promotions</h3>
+                </div>
+                <div class="p-6 flex-1">
                     <template v-if="loading">
-                        <div class="flex flex-col gap-4 w-full mt-5">
-                            <p class="text-gray-400 text-lg">Loading Data...</p>
-                            <Skeleton height="2rem" width="70%" />
-                            <Skeleton height="2rem" width="50%" />
-                            <Skeleton height="1rem" width="90%" />
-                            <Skeleton height="1rem" width="85%" />
-                            <Skeleton height="1rem" width="95%" />
-                            <div class="flex-1 mt-2">
-                                <Skeleton height="100%" borderRadius="8px" />
-                            </div>
+                        <div class="flex flex-col gap-4 w-full">
+                            <Skeleton height="2.5rem" width="100%" borderRadius="8px" />
+                            <Skeleton height="1.5rem" width="70%" />
+                            <Skeleton height="1.5rem" width="90%" />
+                            <Skeleton height="8rem" width="100%" borderRadius="8px" />
                         </div>
                     </template>
-                    <Tabs v-else v-model:value="activeTab">
-                        <TabList>
+                    <Tabs v-else v-model:value="activeTab" class="w-full">
+                        <TabList class="mb-4">
                             <Tab value="0">Internal Promotions</Tab>
                             <Tab value="1">External Promotions</Tab>
                         </TabList>
@@ -140,72 +168,80 @@
             </div>
         </div>
 
-
-        <Dialog v-model:visible="showModal" modal :draggable="false" :closable="false"
-            class="campaign-dialog min-h-[200px]" :style="{ width: '700px', maxHeight: '85vh' }">
+        <!-- Filtered Campaigns Modal Dialog -->
+        <Dialog v-model:visible="showModal" modal :draggable="false" :closable="false" class="campaign-dialog"
+            :style="{ width: '720px', maxHeight: '85vh' }">
             <template #header>
-                <div class="flex justify-between items-center w-full">
-                    <h2 class="text-xl font-bold capitalize dark:text-white text-gray-900 tracking-wide">
-                        {{ selectedStatus }} Campaigns
-                    </h2>
-
+                <div class="flex justify-between items-center w-full px-1">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                        <h2 class="text-lg font-bold capitalize dark:text-white text-gray-900 tracking-wide">
+                            {{ selectedStatus }} Campaigns
+                        </h2>
+                    </div>
                     <Button icon="pi pi-times" text rounded severity="secondary" @click="showModal = false" />
                 </div>
             </template>
 
-            <div class="px-3 pb-3 mt-5">
-                <input v-model="searchTerm" type="text" placeholder="Search campaign..."
-                    class="w-full px-3 py-2 dark:bg-gray-800 bg-gray-100 dark:text-gray-200 text-gray-800 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
+            <div class="p-4 space-y-4">
+                <!-- Search Input with Icon -->
+                <div class="relative">
+                    <input v-model="searchTerm" type="text" placeholder="Search campaign name or channel..."
+                        class="w-full pl-10 pr-4 py-2.5 dark:bg-gray-800 bg-gray-100 dark:text-gray-100 text-gray-900 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg text-sm border border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-gray-900 transition-all focus:outline-none" />
+                    <Search class="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
+                </div>
 
-            <div class="p-2">
-                <DataTable :value="filteredCampaignsSorted" scrollable scrollHeight="60vh" stripedRows showGridlines
-                    removableSort size="small" :rowHover="true" responsiveLayout="scroll">
-                    <Column field="name" header="Campaign" sortable>
-                        <template #body="{ data }">
-                            <span class="font-medium">
-                                {{
-                                    data.channel_name
-                                        ? `${data.channel_name} - ${data.name}`
-                                        : data.name
-                                }}
-                            </span>
+                <!-- Data Table -->
+                <div class="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700/60">
+                    <DataTable :value="filteredCampaignsSorted" scrollable scrollHeight="50vh" stripedRows removableSort
+                        size="small" :rowHover="true" responsiveLayout="scroll">
+                        <Column field="name" header="Campaign" sortable>
+                            <template #body="{ data }">
+                                <span class="font-medium text-gray-800 dark:text-gray-200">
+                                    {{ data.channel_name ? `${data.channel_name} - ${data.name}` : data.name }}
+                                </span>
+                            </template>
+                        </Column>
+
+                        <Column field="start_date" header="Start Date" sortable>
+                            <template #body="{ data }">
+                                <span class="text-xs font-mono text-gray-600 dark:text-gray-400">
+                                    {{ new Date(data.start_date).toLocaleDateString("en-GB") }}
+                                </span>
+                            </template>
+                        </Column>
+
+                        <Column field="end_date" header="End Date" sortable>
+                            <template #body="{ data }">
+                                <span class="text-xs font-mono text-gray-600 dark:text-gray-400">
+                                    {{ new Date(data.end_date).toLocaleDateString("en-GB") }}
+                                </span>
+                            </template>
+                        </Column>
+
+                        <template #empty>
+                            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                No campaigns found matching your search.
+                            </div>
                         </template>
-                    </Column>
-
-                    <Column field="start_date" header="Start Date" sortable>
-                        <template #body="{ data }">
-                            {{ new Date(data.start_date).toLocaleDateString("en-GB") }}
-                        </template>
-                    </Column>
-
-                    <Column field="end_date" header="End Date" sortable>
-                        <template #body="{ data }">
-                            {{ new Date(data.end_date).toLocaleDateString("en-GB") }}
-                        </template>
-                    </Column>
-
-                    <template #empty>
-                        <div class="text-center py-4 text-gray-500 dark:text-gray-400">
-                            No campaigns found.
-                        </div>
-                    </template>
-                </DataTable>
+                    </DataTable>
+                </div>
             </div>
         </Dialog>
-
     </div>
 </template>
 <script setup>
 import { ref, onMounted, computed, nextTick, watch } from "vue";
 import InternalPromotions from "@/js/components/dashboard/InternalPromotions.vue";
 import ExternalPromotions from "@/js/components/dashboard/ExternalPromotions.vue";
+import CampaignCalendar from "@/js/components/dashboard/CampaignCalendar.vue";
 import { fetchCampaigns } from "@/js/api/campaign_service.js";
 import {
     ListChecks,
     PlayCircle,
     CalendarClock,
     CheckCircle2,
+    Search
 } from "lucide-vue-next";
 import Skeleton from "primevue/skeleton";
 import CampaignTimelineChart from "@/js/components/CampaignTimelineChart.vue";

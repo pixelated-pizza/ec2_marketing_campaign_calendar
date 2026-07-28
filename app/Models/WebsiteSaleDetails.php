@@ -29,5 +29,4 @@ class WebsiteSaleDetails extends Model
         'url_text',
     ];
 
-    // websiteCampaign() relationship removed — no FK to website_campaigns anymore
 }

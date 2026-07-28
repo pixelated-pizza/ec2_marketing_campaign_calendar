@@ -22,6 +22,17 @@ class CampaignController extends Controller
         return response()->json($this->service->all());
     }
 
+    public function show(string $id)
+    {
+        $campaign = $this->service->find($id);
+
+        if (!$campaign) {
+            return response()->json(['message' => 'Campaign not found'], 404);
+        }
+
+        return response()->json($campaign);
+    }
+
     public function store(CreateCampaignRequest $request)
     {
 

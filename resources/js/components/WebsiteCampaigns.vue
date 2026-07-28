@@ -132,7 +132,7 @@
                             </div>
                         </template>
 
-                        <Column field="name" header="Banner Name" class="w-1/4">
+                        <Column field="name" header="Campaign / Promotion Name" class="w-1/4">
                             <template #body="{ data }">
                                 <span>{{ data.name }}</span>
                             </template>
@@ -578,6 +578,7 @@ const calendarOptions = ref({
     headerToolbar: {
         left: "prev,next today",
         center: "title",
+        right: "",
     },
     resourceAreaHeaderContent: "On-site Campaigns",
     resources: [],

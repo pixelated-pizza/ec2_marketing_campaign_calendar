@@ -20,7 +20,8 @@ const model = [
   {
     label: 'Home',
     items: [
-      { label: 'Dashboard', icon: 'pi pi-chart-bar', to: '/dashboard', route: 'Dashboard' }
+      { label: 'Dashboard', icon: 'pi pi-chart-bar', to: '/dashboard', route: 'Dashboard' },
+      { label: 'Website Sale Calendar', icon: 'pi pi-calendar', to: '/campaign-calendar', route: 'CampaignCalendar' }
     ]
   },
   {

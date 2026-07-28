@@ -351,9 +351,7 @@ async function loadCampaigns() {
 function renderFilteredCampaigns() {
     if (!channels.value.length) return;
 
-    const channelMap = {};
-    const data = [];
-
+    // 1. Sort Channels
     const preferredOrder = ["Edisons", "Mytopia"];
     const sortedChannels = [...channels.value].sort((a, b) => {
         const ai = preferredOrder.indexOf(a.name);
@@ -364,23 +362,34 @@ function renderFilteredCampaigns() {
         return a.name.localeCompare(b.name);
     });
 
-    sortedChannels.forEach((c) => {
-    const parentId = `channel_${c.channel_id}`;
-    channelMap[String(c.channel_id)] = parentId;
-    data.push({
-        id: parentId,
-        text: c.name,
-        channel_id: String(c.channel_id),
-        type: gantt.config.types.project,  
-        open: true,
-        hide_bar: true,
-        readonly: true,
-        start_date: new Date(),
-        end_date: new Date(new Date().getTime() + 86400000 * 365), 
-    });
-});
+    const channelMap = {};
+    const data = [];
+    const recurringMap = new Map();
 
+    // 2. Add Top-Level Channel Folders
+    sortedChannels.forEach((c) => {
+        const parentId = `channel_${c.channel_id}`;
+        channelMap[String(c.channel_id)] = parentId;
+        data.push({
+            id: parentId,
+            text: c.name,
+            channel_id: String(c.channel_id),
+            type: gantt.config.types.project,
+            open: true,
+            hide_bar: true,
+            readonly: true,
+            start_date: new Date(),
+            end_date: new Date(new Date().getTime() + 86400000 * 365),
+        });
+    });
+
+    // 3. Filter Campaigns (Default to Current Month if no date picker range selected)
     const [startFilter, endFilter] = dateRange.value || [];
+    
+    // Calculate start and end bounds of current month
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
     const filtered = allCampaigns.filter((c) => {
         const matchChannel = selectedChannel.value
@@ -389,29 +398,58 @@ function renderFilteredCampaigns() {
         const matchSearch = searchTerm.value
             ? c.name.toLowerCase().includes(searchTerm.value.toLowerCase())
             : true;
+
         const campaignStart = new Date(c.start_date);
         const campaignEnd = new Date(c.end_date);
+
+        // Date Filter Logic:
         let matchDate = true;
         if (startFilter && endFilter) {
+            // User manually picked a date range
             matchDate = campaignEnd >= startFilter && campaignStart <= endFilter;
+        } else {
+            // Default: Only campaigns active during the current month
+            matchDate = campaignEnd >= currentMonthStart && campaignStart <= currentMonthEnd;
         }
+
         return matchChannel && matchSearch && matchDate;
     });
 
+    // 4. Nest Campaigns under Channels or Recurring Groups
     sortedChannels.forEach((c) => {
-    filtered
-        .filter((f) => String(f.channel_id) === String(c.channel_id)) // ✅ strict string comparison both sides
-        .forEach((campaign) => {
+        filtered
+            .filter((f) => String(f.channel_id) === String(c.channel_id))
+            .forEach((campaign) => {
                 const startDate = campaign.start_date ? new Date(campaign.start_date) : new Date();
                 const endDate = campaign.end_date
                     ? new Date(campaign.end_date)
                     : new Date(startDate.getTime() + 86400000);
                 if (isNaN(startDate) || isNaN(endDate)) return;
 
-                const parentId = channelMap[String(campaign.channel_id)];
-                if (!parentId) {
-                    console.warn("⚠️ No parent found for channel_id:", campaign.channel_id);
-                    return;
+                const channelParentId = channelMap[String(campaign.channel_id)];
+                if (!channelParentId) return;
+
+                const cleanedName = campaign.name.replace(/\s*\d{4}/g, "").trim();
+                const isRecurring = campaign.parent_campaign_id || campaign.is_recurring || (campaign.name !== cleanedName);
+
+                let parentId = channelParentId;
+
+                if (isRecurring) {
+                    const groupKey = `${campaign.channel_id}_${cleanedName}`;
+                    if (!recurringMap.has(groupKey)) {
+                        const recurringGroupId = `group_${groupKey}`;
+                        data.push({
+                            id: recurringGroupId,
+                            text: cleanedName,
+                            type: gantt.config.types.project,
+                            parent: channelParentId,
+                            open: true,
+                            hide_bar: true,
+                            readonly: true,
+                        });
+                        recurringMap.set(groupKey, recurringGroupId);
+                    }
+                    parentId = recurringMap.get(groupKey);
                 }
 
                 data.push({
@@ -427,10 +465,9 @@ function renderFilteredCampaigns() {
             });
     });
 
+    // 5. Render into Gantt
     gantt.clearAll();
     gantt.parse({ data });
-
-    gantt.eachTask(t => console.log(t.type, t.id, t.$level, t.parent));
 
     if (filtered.length) {
         setTimeout(() => {

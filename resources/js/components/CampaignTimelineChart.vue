@@ -43,11 +43,22 @@ function rangeBtnStyle(value) {
 
 function buildCompletedCampaignCount(campaigns) {
   const map = {};
+  const now = new Date();
 
   campaigns.forEach((c, index) => {
     if (!c.end_date) return;
 
+    const start = c.start_date ? new Date(c.start_date) : null;
     const end = new Date(c.end_date);
+
+    // 1. Exclude FUTURE campaigns (haven't started yet)
+    if (start && start > now) return;
+
+    // 2. Exclude CURRENTLY RUNNING campaigns (started, but haven't ended yet)
+    if (end >= now) return; 
+
+    // If it passed both checks above, the campaign is COMPLETED (end < now)
+
     const monthKey = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}`;
 
     if (!map[monthKey]) {
@@ -146,12 +157,6 @@ const chartOptions = computed(() => {
       },
       zoom: { enabled: true, type: "x" },
       background: "transparent"
-    },
-
-    title: {
-      text: "Website Sales or Promotions Completed Per Month",
-      align: "center",
-      style: { fontSize: "16px", fontWeight: "600", color: textColor }
     },
 
     plotOptions: {

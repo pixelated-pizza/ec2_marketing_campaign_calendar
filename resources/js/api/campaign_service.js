@@ -10,6 +10,11 @@ export async function fetchCampaigns() {
   return data;
 }
 
+export async function fetchCampaignById(id) {
+  const response = await api.get(`/campaigns/${id}`);
+  return response.data;
+}
+
 export async function createCampaign(campaign) {
   const { data } = await api.post("/campaigns", campaign);
   return data;

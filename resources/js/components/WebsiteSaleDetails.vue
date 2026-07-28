@@ -1,10 +1,6 @@
 <template>
     <div class="card bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg shadow-sm transition-colors duration-200"
         style="height: calc(95vh - 90px); display: flex; flex-direction: column;">
-        <h4
-            class="font-semibold text-sm text-left p-2 border-b border-gray-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-100 bg-gray-50 dark:bg-zinc-800/50">
-            Website Sale Details
-        </h4>
 
         <template v-if="loading">
             <div class="flex flex-col gap-3 w-full h-full p-4 bg-white dark:bg-zinc-900">
@@ -262,12 +258,14 @@
                         </template>
                     </Column>
 
-                    <Column header="Actions" frozen alignFrozen="right" style="min-width: 70px">
+                    <Column header="Actions" frozen alignFrozen="right" style="min-width: 100px">
                         <template #body="{ data }">
                             <div class="flex gap-1 justify-center">
                                 <Button icon="pi pi-refresh" v-if="isCompleted(data)" title="Re-run Campaign"
                                     severity="warn" size="small" class="p-0.5 w-6 h-6 dark:text-amber-400" text rounded
                                     @click="openRerunModal(data)" />
+                                <Button icon="pi pi-trash" title="Delete Record" severity="danger" size="small"
+                                    class="p-0.5 w-6 h-6" text rounded @click="openDeleteRowDialog(data)" />
                             </div>
                         </template>
                     </Column>
@@ -346,6 +344,26 @@
             </div>
         </Dialog>
 
+        <Dialog v-model:visible="deleteRowConfirmVisible" header="Delete Record" :modal="true"
+            class="w-80 text-xs dark:bg-zinc-900 dark:text-zinc-100" @hide="closeDeleteRowDialog">
+            <div class="flex flex-col gap-3 p-1">
+                <p class="text-sm text-gray-700 dark:text-zinc-300">
+                    Delete <strong>{{ rowToDelete?.event_name }}</strong>
+                    <span v-if="rowToDelete?.channel_name"> ({{ rowToDelete.channel_name }})</span>?
+                </p>
+                <p class="text-xs text-red-500 dark:text-red-400 font-medium">
+                    This cannot be undone.
+                </p>
+                <div class="mt-2 flex justify-end gap-1.5">
+                    <Button label="Cancel" size="small" severity="secondary" class="text-xs"
+                        @click="closeDeleteRowDialog" />
+                    <Button :label="deleteRowCountdown > 0 ? `Delete (${deleteRowCountdown})` : 'Delete'"
+                        :disabled="deleteRowCountdown > 0" size="small" severity="danger" class="text-xs"
+                        :loading="deletingRow" @click="submitDeleteRow" />
+                </div>
+            </div>
+        </Dialog>
+
         <ImportWSDModal ref="importModal" @imported="onImported" />
     </div>
 </template>
@@ -401,6 +419,46 @@ const STATUS_ORDER = { RUNNING: 1, UPCOMING: 2, ENDED: 3 };
 
 const deleteCountdown = ref(5);
 let countdownInterval = null;
+const deleteRowConfirmVisible = ref(false);
+const deletingRow = ref(false);
+const rowToDelete = ref(null);
+const deleteRowCountdown = ref(3);
+let rowCountdownInterval = null;
+
+const openDeleteRowDialog = (data) => {
+    rowToDelete.value = data;
+    deleteRowCountdown.value = 3;
+    deleteRowConfirmVisible.value = true;
+    rowCountdownInterval = setInterval(() => {
+        if (deleteRowCountdown.value > 0) {
+            deleteRowCountdown.value--;
+        } else {
+            clearInterval(rowCountdownInterval);
+        }
+    }, 1000);
+};
+
+const closeDeleteRowDialog = () => {
+    clearInterval(rowCountdownInterval);
+    deleteRowCountdown.value = 3;
+    deleteRowConfirmVisible.value = false;
+    rowToDelete.value = null;
+};
+
+const submitDeleteRow = async () => {
+    if (!rowToDelete.value) return;
+    deletingRow.value = true;
+    try {
+        await wsdStore.removeWSD(rowToDelete.value.wsd_id);
+        toastr.success("Record deleted.");
+        closeDeleteRowDialog();
+    } catch (err) {
+        console.error("Delete failed:", err);
+        toastr.error("Failed to delete record.");
+    } finally {
+        deletingRow.value = false;
+    }
+};
 
 const submitDeleteAll = async () => {
     deletingAll.value = true;
@@ -669,6 +727,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
     if (statusInterval) clearInterval(statusInterval);
+    if (rowCountdownInterval) clearInterval(rowCountdownInterval);
 });
 </script>
 

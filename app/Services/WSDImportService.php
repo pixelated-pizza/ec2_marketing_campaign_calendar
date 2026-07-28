@@ -251,7 +251,7 @@ class WSDImportService
         try {
             // Extract only the date portion to avoid any timezone drift on re-parse
             $dateOnly = Carbon::parse($value)->format('Y-m-d');
-            $time = $type === 'start' ? '09:00:00' : '23:59:59';
+            $time = $type === 'start' ? '09:00:00' : '23:59:00';
 
             return "{$dateOnly} {$time}";
         } catch (\Throwable $e) {

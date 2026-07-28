@@ -108,6 +108,12 @@ const routes = [
                 component: () =>
                     import("@/js/components/category_featured_skus/CategoryFeaturedSkus.vue"),
             },
+            {
+                path: "campaign-calendar",
+                name: "CampaignCalendarMain",
+                component: () =>
+                    import("@/js/components/dashboard/CampaignCalendarMain.vue"),
+            },
         ],
     },
 ];

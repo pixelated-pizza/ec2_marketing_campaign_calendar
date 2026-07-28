@@ -42,6 +42,9 @@ class WSDService
             throw new \InvalidArgumentException('event_name and channel_name are required.');
         }
 
+        $data['start_date'] = $this->normaliseDateTime($data['start_date'] ?? null);
+        $data['end_date']   = $this->normaliseDateTime($data['end_date'] ?? null);
+
         try {
             $existing = $this->findByEvent($data['event_name'], $data['channel_name'], $data['start_date'] ?? null);
             $data = $this->applyDefaults($data);
@@ -58,6 +61,19 @@ class WSDService
         } catch (\Throwable $e) {
             Log::error('WSD upsert failed', ['error' => $e->getMessage(), 'data' => $data]);
             throw new \RuntimeException('Failed to save Website Sale Details: ' . $e->getMessage());
+        }
+    }
+
+    protected function normaliseDateTime(?string $value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->format('Y-m-d H:i:s');
+        } catch (\Throwable $e) {
+            return null;
         }
     }
 
@@ -170,7 +186,7 @@ class WSDService
 
     public function deleteAll(): array
     {
-       
+
         $wsdRows = DB::table('website_sale_details')
             ->select('event_name', 'channel_name', 'start_date')
             ->get();
