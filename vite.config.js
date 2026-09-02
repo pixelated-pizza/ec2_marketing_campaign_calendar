@@ -13,9 +13,7 @@ export default defineConfig({
         host: "0.0.0.0",
         port: 5173,
         cors: true,
-        hmr: {
-            host: "localhost",
-        },
+        origin: "http://192.168.19.77:5173"
     },
 
     plugins: [

@@ -1,7 +1,7 @@
 <template>
     <div class="flex h-screen w-screen overflow-hidden bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-100 font-sans">
-        <div class="hidden lg:flex w-1/2 relative items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 dark:from-slate-900 dark:via-gray-900 dark:to-black overflow-hidden">
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15),transparent_70%)] animate-pulse"></div>
+        <div class="hidden lg:flex w-1/2 relative items-center justify-center dark:from-slate-900 dark:via-gray-900 dark:to-black overflow-hidden">
+            <div class="absolute inset-0 bg-gray-200 animate-pulse"></div>
 
             <div class="relative z-10 text-center px-12">
                 <div class="ecommerce-world mx-auto mb-12">

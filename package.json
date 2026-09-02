@@ -4,7 +4,7 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "node -e \"const os=require('os');const fs=require('fs');const ip=Object.values(os.networkInterfaces()).flat().find(i=>i.family==='IPv4'&&!i.internal)?.address;let e=fs.readFileSync('.env','utf8');e=e.replace(/APP_URL=.*/,'APP_URL=http://'+ip).replace(/VITE_APP_URL=.*/,'VITE_APP_URL=http://'+ip).replace(/VITE_API_URL=.*/,'VITE_API_URL=http://'+ip);fs.writeFileSync('.env',e);\" && vite"
+        "dev": "node -e \"const os=require('os');const fs=require('fs');const ip=Object.values(os.networkInterfaces()).flat().find(i=>i.family==='IPv4'&&!i.internal)?.address;let e=fs.readFileSync('.env','utf8');e=e.replace(/APP_URL=.*/,'APP_URL=http://'+ip+':8000').replace(/VITE_APP_URL=.*/,'VITE_APP_URL=http://'+ip+':8000').replace(/VITE_API_URL=.*/,'VITE_API_URL=http://'+ip+':8000');fs.writeFileSync('.env',e);\" && vite --host 0.0.0.0"
     },
     "devDependencies": {
         "@iconify-json/radix-icons": "^1.2.6",
