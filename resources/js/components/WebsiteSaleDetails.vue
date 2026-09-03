@@ -1,6 +1,6 @@
 <template>
     <div class="card bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg shadow-sm transition-colors duration-200"
-        style="height: calc(95vh - 90px); display: flex; flex-direction: column;">
+        style="height: calc(97vh - 90px); display: flex; flex-direction: column;">
 
         <template v-if="loading">
             <div class="flex flex-col gap-3 w-full h-full p-4 bg-white dark:bg-zinc-900">
@@ -70,7 +70,7 @@
             <div class="flex-1 min-height-0 border border-gray-300 dark:border-zinc-700 rounded overflow-hidden">
                 <DataTable :value="filteredCampaigns" dataKey="wsd_id" showGridlines scrollable scrollDirection="both"
                     scrollHeight="flex" size="small" class="p-datatable-spreadsheet" editMode="cell"
-                    @cell-edit-complete="onCellEditComplete" :rowClass="rowClass" paginator :rows="25"
+                    @cell-edit-complete="onCellEditComplete" :rowClass="rowClass"
                     :loading="loading">
 
                     <Column header="Status" frozen sortable sortField="statusOrder" style="min-width: 90px">

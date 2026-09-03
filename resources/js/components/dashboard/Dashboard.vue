@@ -118,9 +118,7 @@
             </div>
         </div>
 
-        <!-- Dashboard Content Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Timeline Chart Card -->
             <div
                 class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700/70 shadow-sm overflow-hidden flex flex-col">
                 <div
@@ -135,7 +133,6 @@
                 </div>
             </div>
 
-            <!-- Promotions Panel Card -->
             <div
                 class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700/70 shadow-sm overflow-hidden flex flex-col">
                 <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/60">
@@ -168,14 +165,13 @@
             </div>
         </div>
 
-        <!-- Filtered Campaigns Modal Dialog -->
         <Dialog v-model:visible="showModal" modal :draggable="false" :closable="false" class="campaign-dialog"
             :style="{ width: '720px', maxHeight: '85vh' }">
             <template #header>
                 <div class="flex justify-between items-center w-full px-1">
                     <div class="flex items-center gap-2">
                         <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                        <h2 class="text-lg font-bold capitalize dark:text-white text-gray-900 tracking-wide">
+                        <h2 class="!text-lg font-bold capitalize dark:text-white text-gray-900 tracking-wide">
                             {{ selectedStatus }} Campaigns
                         </h2>
                     </div>
@@ -184,7 +180,6 @@
             </template>
 
             <div class="p-4 space-y-4">
-                <!-- Search Input with Icon -->
                 <div class="relative">
                     <input v-model="searchTerm" type="text" placeholder="Search campaign name or channel..."
                         class="w-full pl-10 pr-4 py-2.5 dark:bg-gray-800 bg-gray-100 dark:text-gray-100 text-gray-900 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg text-sm border border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-gray-900 transition-all focus:outline-none" />

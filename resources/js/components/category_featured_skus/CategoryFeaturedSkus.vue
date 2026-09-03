@@ -8,7 +8,7 @@
             <Button label="Clear All" icon="pi pi-trash" severity="danger" @click="clearAllDialogVisible = true" />
         </div>
 
-        <div>
+        <div class="h-[calc(100vh-250px)]">
             <div class="items-center">
                 <h2 class="text-white dark:text-white text-center font-bold text-lg tracking-wide">
                     Price & Inventory Tracking
@@ -19,7 +19,7 @@
             </span>
 
             <DataTable :value="sortedFeaturedSkus" :rowClass="stockRowClass" :loading="store.isLoading" editMode="cell"
-                @cell-edit-complete="onCellEdit" scrollable showGridlines scrollDirection="both" scrollHeight="650px"
+                @cell-edit-complete="onCellEdit" scrollable showGridlines scrollDirection="both" scrollHeight="600px"
                 style="min-width: 100%">
                 <template #empty>No featured SKUs found.</template>
 

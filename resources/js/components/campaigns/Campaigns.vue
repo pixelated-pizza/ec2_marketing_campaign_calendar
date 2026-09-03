@@ -19,8 +19,8 @@
         </div>
 
         <div class="gantt-wrapper relative w-full overflow-auto touch-pan-y">
-            <div ref="ganttContainer" style="min-height: 500px; height: 600px"
-                class="gantt-container w-full bg-white dark:bg-gray-900"></div>
+            <div ref="ganttContainer"
+                class="gantt-container w-full bg-white dark:bg-gray-900 h-[calc(100vh-250px)]"></div>
 
             <div v-show="loading"
                 class="absolute inset-0 bg-white/80 dark:bg-gray-900/80 flex flex-col gap-4 justify-center items-center z-10">

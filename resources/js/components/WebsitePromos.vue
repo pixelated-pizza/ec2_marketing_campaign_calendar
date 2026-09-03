@@ -1,7 +1,7 @@
 <template>
     <BlockUI :blocked="processing" fullScreen>
         <div
-            class="flex flex-col h-auto max-h-[88vh] overflow-auto p-3 card"
+            class="flex flex-col h-[calc(100vh-120px)] min-h-[500px] overflow-auto p-3 card"
         >
             <h4
                 class="text-gray-200 font-semibold text-lg text-center p-2 mt-5"

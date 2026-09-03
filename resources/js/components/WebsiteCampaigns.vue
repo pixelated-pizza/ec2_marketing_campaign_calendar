@@ -9,7 +9,7 @@
                 </h4>
 
                 <div
-                    class="h-[450px] overflow-hidden rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
+                    class="h-[300px] overflow-hidden rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
                 >
                     <template v-if="loading">
                         <div class="flex flex-col gap-4 w-full h-full p-3">

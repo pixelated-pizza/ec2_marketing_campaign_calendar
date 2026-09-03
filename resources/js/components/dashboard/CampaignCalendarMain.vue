@@ -1,8 +1,9 @@
 <template>
     <div
-        class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700/70 shadow-sm overflow-hidden flex flex-col p-5">
+        class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700/70 shadow-sm flex flex-col p-5 mb-6">
+        
         <!-- Header -->
-        <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-100 dark:border-gray-700/60">
+        <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-100 dark:border-gray-700/60 shrink-0">
             <div>
                 <h2 class="!text-xl font-bold text-gray-900 dark:text-white">
                     Website Sale Calendar
@@ -13,20 +14,22 @@
             </div>
 
             <button @click="loadCampaigns" :disabled="loading"
-                class="text-xs px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-1.5">
+                class="text-xs px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-1.5 disabled:opacity-50">
                 <span>Refresh</span>
             </button>
         </div>
 
-        <div class="flex-1">
-            <div v-if="loading" class="flex flex-col gap-3">
+        <!-- Fixed Height Scrollable Calendar Container -->
+        <div class="w-full h-[calc(100vh-220px)] min-h-[500px] overflow-y-auto pr-1">
+            <div v-if="loading" class="flex flex-col gap-3 h-full">
                 <Skeleton height="3rem" width="100%" borderRadius="8px" />
-                <Skeleton height="28rem" width="100%" borderRadius="12px" />
+                <Skeleton height="100%" width="100%" borderRadius="12px" />
             </div>
 
             <CampaignCalendar v-else :campaigns="campaigns" @eventClick="handleEventClick" />
         </div>
 
+        <!-- Dialog Modal -->
         <Dialog v-model:visible="showModal"
             :header="selectedCampaign?.event_name || selectedCampaign?.name || 'Campaign Details'" :modal="true"
             :dismissableMask="true" class="w-full max-w-2xl text-xs dark:bg-gray-800 dark:text-gray-100">
@@ -35,11 +38,10 @@
                 <div class="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex items-center gap-2">
                         <span class="font-semibold text-gray-500 dark:text-gray-400">Channel:</span>
-                        <span class="font-medium text-gray-900 dark:text-white">{{ selectedCampaign.channel_name || '—'
-                            }}</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ selectedCampaign.channel_name || '—' }}</span>
                     </div>
                     <span v-if="selectedCampaign.status"
-                        class="font-semibold text-xxs tracking-wide uppercase px-2.5 py-0.5 rounded"
+                        class="font-semibold text-[10px] tracking-wide uppercase px-2.5 py-0.5 rounded"
                         :class="statusBadgeClass(selectedCampaign.status)">
                         {{ selectedCampaign.status }}
                     </span>
@@ -50,25 +52,20 @@
                     class="grid grid-cols-2 gap-3 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-600/60">
                     <div>
                         <span class="text-gray-500 dark:text-gray-400 font-medium block mb-0.5">Start Date</span>
-                        <span class="text-gray-800 dark:text-gray-200 font-semibold">{{
-                            formatDate(selectedCampaign.start_date) }}</span>
+                        <span class="text-gray-800 dark:text-gray-200 font-semibold">{{ formatDate(selectedCampaign.start_date) }}</span>
                     </div>
                     <div>
                         <span class="text-gray-500 dark:text-gray-400 font-medium block mb-0.5">End Date</span>
-                        <span class="text-gray-800 dark:text-gray-200 font-semibold">{{
-                            formatDate(selectedCampaign.end_date) }}</span>
+                        <span class="text-gray-800 dark:text-gray-200 font-semibold">{{ formatDate(selectedCampaign.end_date) }}</span>
                     </div>
                 </div>
 
-                <div class="space-y-2">
-                    <h5
-                        class="text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-700 pb-1">
-                        Status: <span class="text-sm font-semibold text-xxs tracking-wide uppercase px-2.5 py-0.5 rounded inline-block"
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">Status:</span>
+                    <span class="font-semibold text-[10px] tracking-wide uppercase px-2.5 py-0.5 rounded inline-block"
                         :class="statusBadgeClass(computeStatus(selectedCampaign))">
                         {{ computeStatus(selectedCampaign) }}
                     </span>
-                    </h5>
-                    
                 </div>
             </div>
 
