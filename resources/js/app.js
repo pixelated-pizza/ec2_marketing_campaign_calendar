@@ -8,6 +8,7 @@ import "toastr/build/toastr.min.css";
 import PrimeVue from 'primevue/config';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import Aura from '@primeuix/themes/aura';
+import { definePreset } from '@primeuix/themes';
 import { ref } from "vue";
 import ganttastic from '@infectoone/vue-ganttastic';
 import ConfirmationService from 'primevue/confirmationservice';
@@ -16,6 +17,25 @@ import VueApexCharts from "vue3-apexcharts";
 
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+
+// PrimeVue Aura with the TailAdmin brand colour as the primary palette
+const BrandPreset = definePreset(Aura, {
+  semantic: {
+    primary: {
+      50: '#ecf3ff',
+      100: '#dde9ff',
+      200: '#c2d6ff',
+      300: '#9cb9ff',
+      400: '#7592ff',
+      500: '#465fff',
+      600: '#3641f5',
+      700: '#2a31d8',
+      800: '#252dae',
+      900: '#262e89',
+      950: '#161950'
+    }
+  }
+});
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -87,7 +107,7 @@ for (const [name, comp] of Object.entries(ElementPlusIconsVue)) {
 
 app.use(PrimeVue, {
   theme: {
-    preset: Aura,
+    preset: BrandPreset,
     options: {
       darkModeSelector: '.app-dark'
     }

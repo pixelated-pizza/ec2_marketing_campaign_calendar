@@ -1,15 +1,8 @@
 <template>
   <div class="apex-wrapper p-5" :style="{ background: isDark ? '#000524' : '#ffffff' }">
-    <div class="range-toggle mb-3">
-      <button v-for="opt in rangeOptions" :key="opt.value" class="range-btn"
-        :class="{ active: selectedRange === opt.value }" :style="rangeBtnStyle(opt.value)"
-        @click="selectedRange = opt.value">
-        {{ opt.label }}
-      </button>
-    </div>
-
     <apexchart v-if="chartReady" type="bar" height="300" :options="chartOptions" :series="series" />
   </div>
+
 </template>
 
 <script setup>
@@ -25,12 +18,7 @@ const props = defineProps({
   }
 });
 
-const rangeOptions = [
-  { label: "6 months", value: 6 },
-  { label: "12 months", value: 12 },
-  // { label: "All", value: "all" }
-];
-const selectedRange = ref(12);
+const selectedRange = ref(6);
 
 function rangeBtnStyle(value) {
   const active = selectedRange.value === value;
@@ -55,7 +43,7 @@ function buildCompletedCampaignCount(campaigns) {
     if (start && start > now) return;
 
     // 2. Exclude CURRENTLY RUNNING campaigns (started, but haven't ended yet)
-    if (end >= now) return; 
+    if (end >= now) return;
 
     // If it passed both checks above, the campaign is COMPLETED (end < now)
 

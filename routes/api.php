@@ -16,6 +16,10 @@ use App\Http\Controllers\WebsitePromoController;
 use App\Http\Controllers\CategoryFeaturedSkusController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WebsiteSaleDetailsImportController;
+use App\Http\Controllers\SheetSnapshotController;
+use App\Http\Controllers\WsdSheetController;
+
+use App\Http\Controllers\SheetMirrorController;
 
 use App\Http\Controllers\NETOProductController;
 
@@ -81,21 +85,21 @@ Route::prefix('onsite_campaign')->group(function() {
     Route::patch('/archive/{id}', [WebsiteCampaignController::class, 'archive_campaign']);
 });
 
-Route::prefix('website_sale_details')->group(function () {
-    Route::get('/', [WebsiteSaleDetailsController::class, 'index']);
-    Route::post('/', [WebsiteSaleDetailsController::class, 'store']);
-    Route::get('/blank', [WebsiteSaleDetailsController::class, 'blank']); // was /blank/{wc_id}
-    Route::delete('/', [WebsiteSaleDetailsController::class, 'destroyAll']);
-    Route::get('/{id}', [WebsiteSaleDetailsController::class, 'show']);
-    Route::put('/{id}', [WebsiteSaleDetailsController::class, 'update']);
-    Route::delete('/{id}', [WebsiteSaleDetailsController::class, 'destroy']);
+// Route::prefix('website_sale_details')->group(function () {
+//     Route::get('/', [WebsiteSaleDetailsController::class, 'index']);
+//     Route::post('/', [WebsiteSaleDetailsController::class, 'store']);
+//     Route::get('/blank', [WebsiteSaleDetailsController::class, 'blank']); // was /blank/{wc_id}
+//     Route::delete('/', [WebsiteSaleDetailsController::class, 'destroyAll']);
+//     Route::get('/{id}', [WebsiteSaleDetailsController::class, 'show']);
+//     Route::put('/{id}', [WebsiteSaleDetailsController::class, 'update']);
+//     Route::delete('/{id}', [WebsiteSaleDetailsController::class, 'destroy']);
 
-    Route::post('/image/{wsd_id}', [WebsiteSaleDetailsController::class, 'uploadImage']);   // was {wc_id}
-    Route::delete('/image/{wsd_id}', [WebsiteSaleDetailsController::class, 'deleteImage']); // was {wc_id}
+//     Route::post('/image/{wsd_id}', [WebsiteSaleDetailsController::class, 'uploadImage']);   // was {wc_id}
+//     Route::delete('/image/{wsd_id}', [WebsiteSaleDetailsController::class, 'deleteImage']); // was {wc_id}
 
-    Route::post('/import/preview', [WebsiteSaleDetailsImportController::class, 'preview']);
-    Route::post('/import/commit', [WebsiteSaleDetailsImportController::class, 'commit']);
-});
+//     Route::post('/import/preview', [WebsiteSaleDetailsImportController::class, 'preview']);
+//     Route::post('/import/commit', [WebsiteSaleDetailsImportController::class, 'commit']);
+// });
 
 
 Route::prefix('archived_promotions')->group(function() {
@@ -137,4 +141,15 @@ Route::prefix('category-featured-skus')->group(function () {
     Route::delete('/{id}', [CategoryFeaturedSkusController::class, 'destroy']);
     Route::delete('/',     [CategoryFeaturedSkusController::class, 'deleteAll']);
 });
+
+Route::prefix('sheet-mirror/{key}')->group(function () {
+    Route::get('/', [SheetMirrorController::class, 'index']);
+    Route::get('/embed-url', [SheetMirrorController::class, 'embedUrl']);
+    Route::post('/pull', [SheetMirrorController::class, 'pull']);
+    Route::post('/push', [SheetMirrorController::class, 'push']);
+    Route::post('/save', [SheetMirrorController::class, 'save']); // NEW
+});
+
+Route::post('/sheet-mirror/{key}/webhook', [SheetMirrorController::class, 'webhook']);
+
 

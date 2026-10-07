@@ -1,34 +1,39 @@
 <template>
-    <div class="layout-wrapper" :class="containerClass">
-        <AppTopbar />
+    <div class="h-screen overflow-hidden bg-gray-50 font-outfit text-gray-800 dark:bg-gray-900 dark:text-gray-100 xl:flex">
         <AppSidebar />
-        <div class="layout-main-container">
-            <div class="layout-main">
+
+        <!-- mobile backdrop -->
+        <div v-if="isMobileOpen" class="fixed inset-0 z-40 bg-gray-900/50 xl:hidden" @click="hideMobileMenu" />
+
+        <div
+            class="flex h-screen min-w-0 flex-1 flex-col overflow-y-auto transition-[margin] duration-300 ease-in-out"
+            :class="layoutState.staticMenuInactive ? 'xl:ms-[90px]' : 'xl:ms-[290px]'"
+        >
+            <AppTopbar />
+
+            <main class="w-full flex-1 p-4 pb-20 md:p-6 md:pb-6">
                 <router-view v-slot="{ Component }">
                     <component :is="Component" />
                 </router-view>
-            </div>
+            </main>
         </div>
-        <div class="layout-mask animate-fadein" @click="hideMobileMenu" />
     </div>
 
     <Toast />
 </template>
+
 <script setup>
+import { onMounted } from 'vue';
 import { useLayout } from '@/js/layouts/composables/layout';
-import { computed } from 'vue';
+import { useUserStore } from '@/js/utils/user.js';
 import AppSidebar from './AppSidebar.vue';
 import AppTopbar from './AppTopbar.vue';
 
-const { layoutConfig, layoutState, hideMobileMenu } = useLayout();
+const { layoutState, isMobileOpen, hideMobileMenu } = useLayout();
 
-const containerClass = computed(() => {
-    return {
-        'layout-overlay': layoutConfig.menuMode === 'overlay',
-        'layout-static': layoutConfig.menuMode === 'static',
-        'layout-overlay-active': layoutState.overlayMenuActive,
-        'layout-mobile-active': layoutState.mobileMenuActive,
-        'layout-static-inactive': layoutState.staticMenuInactive
-    };
+const userStore = useUserStore();
+
+onMounted(async () => {
+    await userStore.fetchUser();
 });
 </script>

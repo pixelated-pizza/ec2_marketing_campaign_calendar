@@ -764,55 +764,43 @@ async function loadCampaigns() {
 }
 
 function updateCalendarResourcesAndEvents() {
-    const resourcesBuilt = ref(false);
     const resources = store.stores.map((st) => {
-        const sections = store.campaign_types
-            .filter((sec) =>
+        const children = store.campaign_types
+            .filter((type) =>
                 store.campaigns.some(
                     (c) =>
                         String(c.store_id) === String(st.store_id) &&
                         String(c.campaign_type_id) ===
-                            String(sec.campaign_type_id),
+                            String(type.campaign_type_id),
                 ),
             )
-            .map((sec) => ({
-                id: `${String(st.store_id)}-${String(sec.campaign_type_id)}`,
-                title: sec.campaign_type_name,
+            .map((type) => ({
+                id: `${st.store_id}-${type.campaign_type_id}`,
+                title: type.campaign_type_name,
             }));
 
         return {
-            id: `store-${String(st.store_id)}`,
+            id: `store-${st.store_id}`,
             title: st.store_name,
-            children: sections,
+            children,
         };
     });
 
-    const sectionIndexMap = {};
+    const colorIndexByRow = {};
 
     const events = store.campaigns.map((c) => {
         const key = `${c.store_id}-${c.campaign_type_id}`;
-
-        if (!(key in sectionIndexMap)) {
-            sectionIndexMap[key] = 0;
-        }
-
-        const color = ganttColors[sectionIndexMap[key] % ganttColors.length];
-        sectionIndexMap[key]++;
+        colorIndexByRow[key] = colorIndexByRow[key] ?? 0;
+        const color = ganttColors[colorIndexByRow[key] % ganttColors.length];
+        colorIndexByRow[key]++;
 
         return {
             id: String(c.wc_id),
             resourceId: key,
             title: c.name,
-            start: c.start_date
-                ? new Date(c.start_date).toLocaleDateString("en-CA")
-                : null,
-            end: c.end_date
-                ? new Date(
-                      new Date(c.end_date).setDate(
-                          new Date(c.end_date).getDate() + 1,
-                      ),
-                  ).toLocaleDateString("en-CA")
-                : null,
+            start: c.start_date ? new Date(c.start_date) : null,
+            end: c.end_date ? new Date(c.end_date) : null,
+            allDay: false,
             backgroundColor: color,
             borderColor: color,
             textColor: "#ffffff",
@@ -820,17 +808,6 @@ function updateCalendarResourcesAndEvents() {
     });
 
     calendarOptions.value = { ...calendarOptions.value, resources, events };
-
-    const calendarApi = calendarRef.value?.getApi();
-    if (calendarApi) {
-        if (typeof calendarApi.removeAllResources === "function") {
-            resources.forEach((r) => calendarApi.addResource(r));
-        }
-
-        if (typeof calendarApi.removeAllEvents === "function") {
-            events.forEach((e) => calendarApi.addEvent(e));
-        }
-    }
 }
 
 async function openAddModal() {
@@ -1139,9 +1116,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.p-datatable .p-sortable-column.p-highlight {
-    background: rgba(59, 130, 246, 0.08) !important;
-}
+
 
 html.app-dark .p-datatable .p-sortable-column.p-highlight {
     background: #1f2937 !important;

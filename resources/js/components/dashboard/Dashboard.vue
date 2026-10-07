@@ -1,19 +1,5 @@
 <template>
     <div class="h-full p-6 bg-gray-50 dark:bg-gray-900 font-sans">
-        <!-- Dashboard Header -->
-        <!-- <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-            <div>
-                <h1 class="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
-                    Dashboard
-                </h1>
-            </div>
-            <div
-                class="flex items-center gap-2 self-start sm:self-auto bg-white dark:bg-gray-800 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm text-xs text-gray-600 dark:text-gray-300">
-                <CalendarClock class="w-4 h-4 text-blue-500" />
-                <span>Updated Today</span>
-            </div>
-        </div> -->
-
         <!-- Metric Stat Cards Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
             <!-- Total Campaigns -->
@@ -55,7 +41,8 @@
                 <div v-else class="flex items-center justify-between">
                     <div>
                         <span
-                            class="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Ongoing Campaign/s</span>
+                            class="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Ongoing
+                            Campaign/s</span>
                         <div class="text-3xl font-bold text-gray-900 dark:text-white mt-1">
                             {{ stats.active }}
                         </div>
@@ -118,27 +105,28 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 items-stretch">
+            <!-- Chart card -->
             <div
-                class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700/70 shadow-sm overflow-hidden flex flex-col">
-                <div
-                    class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between">
-                    <h3 class="font-semibold text-gray-900 dark:text-white !text-lg">Website Sales and Promotions Completed Per Month</h3>
+                class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700/70 shadow-sm overflow-hidden flex flex-col">
+                <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700/60">
+                    <h3 class="font-semibold text-gray-900 dark:text-white !text-base">
+                        Website Sales and Promotions for the Last 6 Months
+                    </h3>
                 </div>
-                <div class="p-6 flex-1 flex flex-col justify-center">
-                    <div v-if="loading" class="flex flex-col gap-3">
-                        <Skeleton height="12rem" width="100%" borderRadius="12px" />
-                    </div>
-                    <CampaignTimelineChart v-else :campaigns="campaigns" />
+                <div class="p-3 flex-1 min-h-[24rem]">
+                    <Skeleton v-if="loading" height="100%" width="100%" borderRadius="12px" />
+                    <CampaignTimelineChart v-else :campaigns="campaigns" class="h-full w-full" />
                 </div>
             </div>
 
+            <!-- Promotions card -->
             <div
-                class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700/70 shadow-sm overflow-hidden flex flex-col">
-                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/60">
-                    <h3 class="font-semibold text-gray-900 dark:text-white !text-lg">Promotions</h3>
+                class="lg:col-span-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700/70 shadow-sm overflow-hidden flex flex-col">
+                <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700/60">
+                    <h3 class="font-semibold text-gray-900 dark:text-white !text-base">Promotions</h3>
                 </div>
-                <div class="p-6 flex-1">
+                <div class="p-3 flex-1 min-h-[24rem]">
                     <template v-if="loading">
                         <div class="flex flex-col gap-4 w-full">
                             <Skeleton height="2.5rem" width="100%" borderRadius="8px" />
@@ -147,12 +135,12 @@
                             <Skeleton height="8rem" width="100%" borderRadius="8px" />
                         </div>
                     </template>
-                    <Tabs v-else v-model:value="activeTab" class="w-full">
-                        <TabList class="mb-4">
+                    <Tabs v-else v-model:value="activeTab" class="w-full h-full">
+                        <TabList class="mb-3">
                             <Tab value="0">Internal Promotions</Tab>
                             <Tab value="1">External Promotions</Tab>
                         </TabList>
-                        <TabPanels>
+                        <TabPanels class="!p-0">
                             <TabPanel value="0">
                                 <InternalPromotions />
                             </TabPanel>

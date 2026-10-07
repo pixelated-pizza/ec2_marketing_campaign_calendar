@@ -1,9 +1,10 @@
 <template>
     <div
         class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700/70 shadow-sm flex flex-col p-5 mb-6">
-        
+
         <!-- Header -->
-        <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-100 dark:border-gray-700/60 shrink-0">
+        <div
+            class="flex items-center justify-between mb-4 pb-4 border-b border-gray-100 dark:border-gray-700/60 shrink-0">
             <div>
                 <h2 class="!text-xl font-bold text-gray-900 dark:text-white">
                     Website Sale Calendar
@@ -29,50 +30,76 @@
             <CampaignCalendar v-else :campaigns="campaigns" @eventClick="handleEventClick" />
         </div>
 
-        <!-- Dialog Modal -->
-        <Dialog v-model:visible="showModal"
-            :header="selectedCampaign?.event_name || selectedCampaign?.name || 'Campaign Details'" :modal="true"
-            :dismissableMask="true" class="w-full max-w-2xl text-xs dark:bg-gray-800 dark:text-gray-100">
-            <div v-if="selectedCampaign" class="flex flex-col gap-4 p-2 text-xs">
-                <!-- Status & Channel Header -->
-                <div class="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
-                    <div class="flex items-center gap-2">
-                        <span class="font-semibold text-gray-500 dark:text-gray-400">Channel:</span>
-                        <span class="font-medium text-gray-900 dark:text-white">{{ selectedCampaign.channel_name || '—' }}</span>
-                    </div>
-                    <span v-if="selectedCampaign.status"
-                        class="font-semibold text-[10px] tracking-wide uppercase px-2.5 py-0.5 rounded"
-                        :class="statusBadgeClass(selectedCampaign.status)">
-                        {{ selectedCampaign.status }}
-                    </span>
-                </div>
+        <Dialog v-model:visible="showModal" :modal="true" :dismissableMask="true" :closable="false"
+            :pt="{ root: { class: 'border-0 bg-transparent shadow-none' }, mask: { class: 'backdrop-blur-[1px]' } }">
+            <template #container>
+                <div v-if="selectedCampaign"
+                    class="w-[420px] max-w-[92vw] rounded-2xl bg-[#eef2f9] dark:bg-gray-800 shadow-xl px-6 pt-4 pb-6 text-gray-700 dark:text-gray-200">
 
-                <!-- Timeline Dates -->
-                <div
-                    class="grid grid-cols-2 gap-3 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-600/60">
-                    <div>
-                        <span class="text-gray-500 dark:text-gray-400 font-medium block mb-0.5">Start Date</span>
-                        <span class="text-gray-800 dark:text-gray-200 font-semibold">{{ formatDate(selectedCampaign.start_date) }}</span>
+                    <!-- Top action row -->
+                    <div class="flex items-center justify-end mb-1 -mr-2">
+                        <button type="button"
+                            class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10"
+                            aria-label="Close" @click="showModal = false">
+                            <i class="pi pi-times text-base"></i>
+                        </button>
                     </div>
-                    <div>
-                        <span class="text-gray-500 dark:text-gray-400 font-medium block mb-0.5">End Date</span>
-                        <span class="text-gray-800 dark:text-gray-200 font-semibold">{{ formatDate(selectedCampaign.end_date) }}</span>
+
+                    <!-- Title row: colored dot + title + date -->
+                    <div class="flex items-start gap-5">
+                        <span class="mt-[7px] w-4 h-4 rounded-[4px] shrink-0"
+                            :class="statusDotClass(computeStatus(selectedCampaign))"></span>
+                        <div class="min-w-0">
+                            <div
+                                class="text-[22px] leading-[30px] font-normal m-0 text-gray-900 dark:text-white break-words">
+                                {{ selectedCampaign.event_name || selectedCampaign.name || 'Campaign Details' }}
+                            </div>
+                            <div class="text-sm leading-5 font-normal m-0 mt-0.5 text-gray-700 dark:text-gray-300">
+                                {{ formatDate(selectedCampaign.start_date) }} – {{ formatDate(selectedCampaign.end_date)
+                                }}
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="flex items-center gap-2">
-                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">Status:</span>
-                    <span class="font-semibold text-[10px] tracking-wide uppercase px-2.5 py-0.5 rounded inline-block"
-                        :class="statusBadgeClass(computeStatus(selectedCampaign))">
-                        {{ computeStatus(selectedCampaign) }}
-                    </span>
-                </div>
-            </div>
+                    <!-- Detail rows: icon + text -->
+                    <div class="mt-6 flex flex-col gap-4 text-sm">
+                        <!-- Channel -->
+                        <div class="flex items-center gap-5">
+                            <i class="pi pi-shop w-4 text-center text-base text-gray-600 dark:text-gray-400"></i>
+                            <span>{{ selectedCampaign.channel_name || '—' }}</span>
+                        </div>
 
-            <template #footer>
-                <div class="flex justify-end pt-2">
-                    <Button label="Close" severity="secondary" size="small" class="text-xs"
-                        @click="showModal = false" />
+                        <!-- Start date -->
+                        <div class="flex items-center gap-5">
+                            <i class="pi pi-calendar w-4 text-center text-base text-gray-600 dark:text-gray-400"></i>
+                            <span>Start: {{ formatDate(selectedCampaign.start_date) }}</span>
+                        </div>
+
+                        <!-- End date -->
+                        <div class="flex items-center gap-5">
+                            <i
+                                class="pi pi-calendar-times w-4 text-center text-base text-gray-600 dark:text-gray-400"></i>
+                            <span>End: {{ formatDate(selectedCampaign.end_date) }}</span>
+                        </div>
+
+                        <!-- Status (computed) -->
+                        <div class="flex items-center gap-5">
+                            <i class="pi pi-info-circle w-4 text-center text-base text-gray-600 dark:text-gray-400"></i>
+                            <span class="font-semibold text-[10px] tracking-wide uppercase px-2.5 py-0.5 rounded"
+                                :class="statusBadgeClass(computeStatus(selectedCampaign))">
+                                {{ computeStatus(selectedCampaign) }}
+                            </span>
+                        </div>
+
+                        <!-- Status (from record) -->
+                        <div v-if="selectedCampaign.status" class="flex items-center gap-5">
+                            <i class="pi pi-tag w-4 text-center text-base text-gray-600 dark:text-gray-400"></i>
+                            <span class="font-semibold text-[10px] tracking-wide uppercase px-2.5 py-0.5 rounded"
+                                :class="statusBadgeClass(selectedCampaign.status)">
+                                {{ selectedCampaign.status }}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </template>
         </Dialog>
@@ -85,7 +112,6 @@ import CampaignCalendar from "@/js/components/dashboard/CampaignCalendar.vue";
 import { fetchCampaigns, fetchCampaignById } from "@/js/api/campaign_service.js";
 import Skeleton from "primevue/skeleton";
 import Dialog from "primevue/dialog";
-import Button from "primevue/button";
 
 const campaigns = ref([]);
 const loading = ref(true);
@@ -137,6 +163,21 @@ async function handleEventClick(campaign) {
     }
 }
 
+const statusDotClass = (status) => {
+    switch ((status || '').toLowerCase()) {
+        case 'active':
+        case 'ongoing':
+            return 'bg-green-600';
+        case 'upcoming':
+        case 'scheduled':
+            return 'bg-blue-600';
+        case 'completed':
+        case 'ended':
+            return 'bg-gray-500';
+        default:
+            return 'bg-emerald-700';
+    }
+};
 
 function formatDate(dateStr) {
     if (!dateStr) return "—";

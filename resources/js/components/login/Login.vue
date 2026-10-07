@@ -1,27 +1,17 @@
 <template>
-    <div class="flex h-screen w-screen overflow-hidden bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-100 font-sans">
+    <div class="flex h-screen w-screen overflow-hidden bg-gray-100 dark:bg-gray-950 text-gray-800 dark:text-gray-100 font-sans">
         <div class="hidden lg:flex w-1/2 relative items-center justify-center dark:from-slate-900 dark:via-gray-900 dark:to-black overflow-hidden">
             <div class="absolute inset-0 bg-gray-200 animate-pulse"></div>
 
             <div class="relative z-10 text-center px-12">
-                <div class="ecommerce-world mx-auto mb-12">
-                    <div class="globe"></div>
-                    <i class="pi pi-shopping-cart float-icon" style="--i: 1"></i>
-                    <i class="pi pi-box float-icon" style="--i: 2"></i>
-                    <i class="pi pi-truck float-icon" style="--i: 3"></i>
-                    <i class="pi pi-globe float-icon" style="--i: 4"></i>
-                    <i class="pi pi-store float-icon" style="--i: 5"></i>
-                </div>
-                <h1 class="text-5xl font-extrabold tracking-tight text-white mb-4">
-                    MillsBrands&copy;
-                </h1>
+                <img :src="mainIconUrl" alt="Logo" class="w-120 h-70 mx-auto mb-6" />
             </div>
         </div>
 
         <div class="flex w-full lg:w-1/2 items-center justify-center p-8 bg-white dark:bg-gray-900 transition-colors duration-300">
             <div class="w-full max-w-md space-y-8">
                 <div class="text-center">
-                    <img :src="appIconUrl" alt="Logo" class="w-20 h-20 mx-auto mb-6 rounded-2xl shadow-lg" />
+                    <img :src="appIconUrl" alt="Logo" class="w-20 h-20 mx-auto mb-6" />
                     <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Welcome back</h2>
                     <p class="text-gray-500 dark:text-gray-400 mt-2">Marketing Campaign Calendar</p>
                 </div>
@@ -112,7 +102,8 @@ const rememberMe = ref(false);
 const router = useRouter();
 const { appContext } = getCurrentInstance();
 const $toastr = appContext.config.globalProperties.$toastr;
-const appIconUrl = `${import.meta.env.VITE_BASE_URL || ''}/app_icon.png`;
+const appIconUrl = `${import.meta.env.VITE_BASE_URL || ''}/logo1.png`;
+const mainIconUrl = `${import.meta.env.VITE_BASE_URL || ''}/logo2.png`;
 
 const handleLogin = async () => {
     loading.value = true;

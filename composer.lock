@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9f2ba2a0851876b74eb2c22bff28c5a4",
+    "content-hash": "e246eb17cbad8823a154262a237b4f16",
     "packages": [
         {
             "name": "brick/math",
@@ -4026,6 +4026,76 @@
                 "source": "https://github.com/ramsey/uuid/tree/4.9.2"
             },
             "time": "2025-12-14T04:43:48+00:00"
+        },
+        {
+            "name": "revolution/laravel-google-sheets",
+            "version": "7.1.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/invokable/laravel-google-sheets.git",
+                "reference": "2ed1e40e11a46413809300f606e10b0a9a132929"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/invokable/laravel-google-sheets/zipball/2ed1e40e11a46413809300f606e10b0a9a132929",
+                "reference": "2ed1e40e11a46413809300f606e10b0a9a132929",
+                "shasum": ""
+            },
+            "require": {
+                "google/apiclient": "^2.16",
+                "illuminate/support": "^11.0||^12.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.22",
+                "orchestra/testbench": "^10.0",
+                "pulkitjalan/google-apiclient": "^6.2"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Revolution\\Google\\Sheets\\Providers\\SheetsServiceProvider",
+                        "Revolution\\Google\\Client\\Providers\\GoogleServiceProvider"
+                    ],
+                    "google/apiclient-services": [
+                        "Drive",
+                        "Sheets"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Revolution\\Google\\Client\\": "lib/google/",
+                    "Revolution\\Google\\Sheets\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "kawax",
+                    "email": "kawaxbiz@gmail.com"
+                }
+            ],
+            "description": "Google Sheets API v4",
+            "keywords": [
+                "google",
+                "laravel",
+                "sheets"
+            ],
+            "support": {
+                "source": "https://github.com/invokable/laravel-google-sheets/tree/7.1.4"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/invokable",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-06-19T22:54:59+00:00"
         },
         {
             "name": "symfony/clock",
@@ -9393,5 +9463,5 @@
         "php": "^8.2"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }

@@ -1,271 +1,248 @@
 <template>
-    <Dialog v-model:visible="visible" header="Import Website Sale Details" :modal="true" :closable="!busy"
-        class="w-full" style="max-width: 1100px">
-
-        <!-- Step 1: Upload -->
-        <div v-if="step === 'upload'" class="flex flex-col gap-3">
-            <p class="text-sm text-gray-500">
-                Upload a CSV export. You'll map its columns to fields before anything is saved.
-            </p>
-            <input type="file" accept=".csv" @change="onFileSelected" />
-        </div>
-
-        <!-- Step 2: Column mapping -->
-        <div v-else-if="step === 'mapping'" class="flex flex-col gap-3">
-            <p class="text-sm text-gray-500">
-                Map each CSV column to a field. Channel, Event Name, Start Date and End Date
-                identify the event — rows with the same combo update the existing record.
-            </p>
-            <div class="overflow-auto" style="max-height: 50vh">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="text-left border-b">
-                            <th class="p-2">CSV Column</th>
-                            <th class="p-2">Sample Value</th>
-                            <th class="p-2">Maps To</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="(header, i) in csvHeaders" :key="i" class="border-b">
-                            <td class="p-2 font-medium">{{ header || '(blank header)' }}</td>
-                            <td class="p-2 text-gray-400 truncate max-w-xs">{{ sampleValue(i) }}</td>
-                            <td class="p-2">
-                                <Select v-model="columnMap[i]" :options="targetFields" optionLabel="label"
-                                    optionValue="value" class="w-64" />
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+    <Dialog v-model:visible="visible" header="Import CSV" :modal="true" class="w-[36rem] text-xs dark:bg-zinc-900 dark:text-zinc-100">
+        <div class="flex flex-col gap-3 p-1">
+            <div>
+                <label class="font-semibold text-xs text-gray-700 dark:text-zinc-300 block mb-1">CSV file</label>
+                <input type="file" accept=".csv,text/csv" @change="onFileChange"
+                    class="text-xs text-gray-700 dark:text-zinc-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-gray-100 dark:file:bg-zinc-800 file:text-gray-700 dark:file:text-zinc-200" />
             </div>
-            <div class="flex justify-end gap-2 mt-2">
-                <Button label="Back" class="p-button-secondary" @click="step = 'upload'" />
-                <Button label="Preview" :loading="busy" @click="runPreview" />
-            </div>
-        </div>
 
-        <!-- Step 3: Review -->
-        <div v-else-if="step === 'review'" class="flex flex-col gap-3">
-            <p class="text-sm text-gray-500">
-                {{ validCount }} of {{ previewRows.length }} rows are ready to import
-                ({{ previewRows.length - validCount }} skipped — missing Channel or Event Name,
-                e.g. year-grouping rows from the sheet).
-            </p>
-            <div class="overflow-auto" style="max-height: 50vh">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="text-left border-b">
-                            <th class="p-2">Channel</th>
-                            <th class="p-2">Event Name</th>
-                            <th class="p-2">Dates</th>
-                            <th class="p-2">Result</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="row in previewRows" :key="row.row_index" class="border-b"
-                            :class="{ 'opacity-40': !row.valid }">
-                            <td class="p-2">{{ row.channel_name }}</td>
-                            <td class="p-2">{{ row.event_name }}</td>
-                            <td class="p-2 text-xs">{{ row.start_date }} → {{ row.end_date }}</td>
-                            <td class="p-2">
-                                <span v-if="!row.valid" class="text-gray-400">Skipped — missing data</span>
-                                <span v-else-if="row.will_update" class="text-amber-500 font-semibold">Will update existing</span>
-                                <span v-else class="text-green-600 font-semibold">Will create new</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="flex justify-end gap-2 mt-2">
-                <Button label="Back" class="p-button-secondary" @click="step = 'mapping'" />
-                <Button label="Confirm Import" severity="success" :loading="busy" @click="runCommit" />
-            </div>
-        </div>
+            <p v-if="parseError" class="text-xs text-red-500 dark:text-red-400">{{ parseError }}</p>
 
-        <!-- Step 4: Done -->
-        <div v-else-if="step === 'done'" class="flex flex-col gap-2 text-center py-6">
-            <i class="pi pi-check-circle text-4xl text-green-500"></i>
-            <p>{{ result.details_saved }} record(s) saved, {{ result.skipped }} skipped.</p>
+            <template v-if="parsedRows.length">
+                <p class="text-xs text-gray-600 dark:text-zinc-400">
+                    {{ parsedRows.length }} row(s) detected across {{ headers.length }} column(s).
+                    <span v-if="newHeaderCount" class="text-amber-600 dark:text-amber-400">
+                        {{ newHeaderCount }} column(s) don't match the sheet and will be added as new columns.
+                    </span>
+                </p>
 
-            <div v-if="result.errors?.length" class="text-left text-sm mt-3">
-                <p class="text-red-500 font-semibold mb-1">{{ result.errors.length }} row(s) failed:</p>
-                <div class="max-h-48 overflow-auto border border-red-900 rounded p-2 bg-black/20">
-                    <div v-for="(err, i) in result.errors" :key="i" class="text-red-400 py-0.5 border-b border-red-900/40">
-                        <strong>{{ err.row || '(row ' + i + ')' }}:</strong> {{ err.error }}
-                    </div>
+                <div class="overflow-auto max-h-52 border border-gray-200 dark:border-zinc-700 rounded">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr>
+                                <th v-for="h in headers" :key="h"
+                                    class="px-2 py-1 text-left border-b border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 whitespace-nowrap">
+                                    {{ h }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(row, i) in parsedRows.slice(0, 5)" :key="i">
+                                <td v-for="(cell, j) in row" :key="j"
+                                    class="px-2 py-1 border-b border-gray-100 dark:border-zinc-800 truncate max-w-[10rem]">
+                                    {{ cell }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p v-if="parsedRows.length > 5" class="text-gray-400 dark:text-zinc-600 px-2 py-1">
+                        …and {{ parsedRows.length - 5 }} more row(s)
+                    </p>
                 </div>
-            </div>
+            </template>
 
-            <Button label="Close" class="mt-3 mx-auto" @click="close" />
+            <div class="mt-2 flex justify-end gap-1.5">
+                <Button label="Cancel" size="small" severity="secondary" class="text-xs" @click="close" />
+                <Button label="Import" size="small" severity="success" class="text-xs"
+                    :loading="importing" :disabled="!parsedRows.length" @click="confirmImport" />
+            </div>
         </div>
     </Dialog>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import Dialog from "primevue/dialog";
-import Select from "primevue/select";
 import Button from "primevue/button";
-import Papa from "papaparse";
-import { useWSDStore } from "@/js/stores/wsd_store";
+import { useWSDStore } from "@/js/stores/wsd_store.js";
+import { pruneBlankCells, shouldWrapText } from "@/js/config/wsd_columns.js";
+
+// must match the key used in WSDFortuneSheet.vue
+const SHEET_SNAPSHOT_KEY = "website-sale-details";
 
 const wsdStore = useWSDStore();
 const emit = defineEmits(["imported"]);
 
 const visible = ref(false);
-const step = ref("upload");
-const busy = ref(false);
-
-const csvHeaders = ref([]);
-const csvRows = ref([]);
-const columnMap = ref({});
-const previewRows = ref([]);
-const result = ref(null);
-
-const targetFields = [
-    { value: "skip", label: "— Skip —" },
-    { value: "store_name", label: "Channel (identifies event)" },
-    { value: "name", label: "Event Name (identifies event)" },
-    { value: "start_date", label: "Start Date (identifies event)" },
-    { value: "end_date", label: "End Date" },
-    { value: "terms_conditions", label: "T&Cs" },
-    { value: "mockup_banner_locations", label: "Mockup & Banner Locations" },
-    { value: "featured_products_sheet_url", label: "Featured Products Sheet URL" },
-    { value: "event_master_sheet_url", label: "Event Master Sheet URL" },
-    { value: "run_sheet_url", label: "Run Sheet URL" },
-    { value: "is_sku_list_to_feature", label: "SKU List to Feature? (Yes/No)" },
-    { value: "ess", label: "ESS to Execute" },
-    { value: "cms_to_audit", label: "CMS to Audit" },
-    { value: "featured_banner_text", label: "Featured Banner Text" },
-    { value: "sku_in_category_creative", label: "SKU in Category Creative" },
-    { value: "url_text", label: "URL Text" },
-];
-
-const guessMap = {
-    store_name: ["channel"],
-    name: ["event name"],
-    start_date: ["start date"],
-    end_date: ["end date"],
-    terms_conditions: ["t&c"],
-    mockup_banner_locations: ["mock up", "banner location"],
-    event_master_sheet_url: ["event master sheet"],
-    run_sheet_url: ["run sheet"],
-    is_sku_list_to_feature: ["sku list to feature"],
-    ess: ["ess"],
-    cms_to_audit: ["cms"],
-    featured_banner_text: ["featured category banners text"],
-    sku_in_category_creative: ["sku feature in"],
-    url_text: ["url text"],
-};
-
-function autoGuess(header) {
-    const h = (header || "").toLowerCase();
-    for (const [field, keywords] of Object.entries(guessMap)) {
-        if (keywords.some((k) => h.includes(k))) return field;
-    }
-    return "skip";
-}
+const importing = ref(false);
+const parseError = ref("");
+const headers = ref([]);
+const parsedRows = ref([]);
+const newHeaderCount = ref(0);
 
 function open() {
     visible.value = true;
-    step.value = "upload";
-    csvHeaders.value = [];
-    csvRows.value = [];
-    columnMap.value = {};
-    previewRows.value = [];
-    result.value = null;
+    importing.value = false;
+    parseError.value = "";
+    headers.value = [];
+    parsedRows.value = [];
+    newHeaderCount.value = 0;
 }
-
 function close() {
     visible.value = false;
-    emit("imported", result.value);
+}
+defineExpose({ open });
+
+/* --------------------------- minimal CSV parser --------------------------- *
+ * Handles quoted fields, embedded commas, escaped quotes ("") and both
+ * \n and \r\n line endings, without adding a dependency. */
+function parseCSV(text) {
+    const rows = [];
+    let row = [];
+    let field = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const next = text[i + 1];
+
+        if (inQuotes) {
+            if (char === '"' && next === '"') {
+                field += '"';
+                i++;
+            } else if (char === '"') {
+                inQuotes = false;
+            } else if (char === "\r") {
+                // skip — normalize CRLF line endings inside quoted
+                // multi-line fields the same way we do outside them
+            } else {
+                field += char;
+            }
+        } else if (char === '"') {
+            inQuotes = true;
+        } else if (char === ",") {
+            row.push(field);
+            field = "";
+        } else if (char === "\r") {
+            // skip, \n handles the line break
+        } else if (char === "\n") {
+            row.push(field);
+            rows.push(row);
+            row = [];
+            field = "";
+        } else {
+            field += char;
+        }
+    }
+    if (field.length || row.length) {
+        row.push(field);
+        rows.push(row);
+    }
+    return rows;
 }
 
-function onFileSelected(e) {
-    const file = e.target.files[0];
+function onFileChange(e) {
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    Papa.parse(file, {
-        skipEmptyLines: true,
-        complete: (res) => {
-            const data = res.data;
-            const headerRowIndex = data.findIndex((r) =>
-                r.some((cell) => String(cell).toLowerCase().includes("event name")),
+    parseError.value = "";
+    headers.value = [];
+    parsedRows.value = [];
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            const rows = parseCSV(String(reader.result)).filter(
+                (r) => r.length && r.some((v) => String(v ?? "").trim() !== ""),
             );
-            const headerRow = headerRowIndex >= 0 ? data[headerRowIndex] : data[0];
-            const bodyRows = data.slice((headerRowIndex >= 0 ? headerRowIndex : 0) + 1);
+            if (!rows.length) {
+                parseError.value = "That file doesn't look like it has any rows.";
+                return;
+            }
+            headers.value = rows[0].map((h) => String(h ?? "").trim());
+            parsedRows.value = rows.slice(1);
+        } catch (err) {
+            console.error("[import] CSV parse failed", err);
+            parseError.value = "Couldn't parse that file as CSV.";
+        }
+    };
+    reader.onerror = () => {
+        parseError.value = "Couldn't read that file.";
+    };
+    reader.readAsText(file);
+}
 
-            csvHeaders.value = headerRow;
-            csvRows.value = bodyRows.filter((r) => r.some((cell) => String(cell).trim() !== ""));
+/* ------------------- merge parsed CSV rows into a sheet object ------------------- *
+ * Matches CSV headers to the sheet's existing header row (row 0) by text,
+ * case-insensitively. Unmatched headers are appended as brand-new columns
+ * so this keeps working even after someone renames/reorders/adds columns. */
+function mergeCsvIntoSheet(sheet, csvHeaders, csvRows) {
+    // Drop any dense `data` array carried over from the sheet's last save —
+    // we're only updating celldata here, and leaving a stale `data` behind
+    // lets it shadow these very rows the next time the sheet loads.
+    // Also drop dead blanked-out cells (left behind by delete/clear
+    // operations) so they can't be mistaken for real content below.
+    const { data, ...sheetRest } = sheet;
+    const celldata = pruneBlankCells(sheetRest.celldata);
 
-            const map = {};
-            headerRow.forEach((h, i) => (map[i] = autoGuess(h)));
-            columnMap.value = map;
+    const existingHeaders = new Map(); // lowercased header text -> column index
+    let maxCol = -1;
+    for (const cell of celldata) {
+        if (cell.r === 0) {
+            const text = String(cell.v?.v ?? cell.v?.m ?? "").trim().toLowerCase();
+            if (text) existingHeaders.set(text, cell.c);
+            maxCol = Math.max(maxCol, cell.c);
+        }
+    }
 
-            step.value = "mapping";
-        },
+    let newCols = 0;
+    const colMap = csvHeaders.map((h) => {
+        const key = h.trim().toLowerCase();
+        if (existingHeaders.has(key)) return existingHeaders.get(key);
+        maxCol += 1;
+        newCols += 1;
+        existingHeaders.set(key, maxCol);
+        celldata.push({ r: 0, c: maxCol, v: { v: h, m: h, bl: 1, bg: "#f8f9fa", fc: "#5f6368" } });
+        return maxCol;
     });
+    newHeaderCount.value = newCols;
+
+    let maxRow = 0;
+    for (const cell of celldata) if (cell.r > maxRow) maxRow = cell.r;
+    let nextRow = maxRow + 1;
+
+    for (const row of csvRows) {
+        if (row.every((v) => !String(v ?? "").trim())) continue; // skip blank rows
+        row.forEach((value, i) => {
+            const c = colMap[i];
+            if (c === undefined) return;
+            const text = String(value ?? "");
+            const style = shouldWrapText(text) ? { tb: 2 } : {};
+            celldata.push({ r: nextRow, c, v: { v: value, m: text, ...style } });
+        });
+        nextRow += 1;
+    }
+
+    return {
+        ...sheetRest,
+        celldata,
+        row: Math.max(sheetRest.row || 0, nextRow + 5),
+        column: Math.max(sheetRest.column || 0, maxCol + 1 + 5),
+    };
 }
 
-function sampleValue(colIndex) {
-    const row = csvRows.value.find((r) => r[colIndex]);
-    return row ? row[colIndex] : "";
-}
-
-function buildMappedRows() {
-    return csvRows.value
-        .map((row) => {
-            const mapped = { fields: {} };
-            Object.entries(columnMap.value).forEach(([colIndex, target]) => {
-                if (target === "skip") return;
-                const value = row[colIndex] ?? "";
-                if (["store_name", "name", "start_date", "end_date"].includes(target)) {
-                    mapped[target] = value;
-                } else {
-                    mapped.fields[target] = value;
-                }
-            });
-            return mapped;
-        })
-        .filter((row) => (row.name && row.name.trim()) || (row.store_name && row.store_name.trim()));
-}
-
-const validCount = computed(() => previewRows.value.filter((r) => r.valid).length);
-
-async function runPreview() {
-    busy.value = true;
+async function confirmImport() {
+    importing.value = true;
     try {
-        const rows = buildMappedRows();
-        const data = await wsdStore.previewImport(rows);
-        previewRows.value = data.rows;
-        step.value = "review";
+        const rawSnapshot = await wsdStore.loadSheetSnapshot(SHEET_SNAPSHOT_KEY);
+        const sheets =
+            Array.isArray(rawSnapshot) && rawSnapshot.length
+                ? rawSnapshot
+                : [{ name: "Website Sale Details", celldata: [], row: 1, column: headers.value.length }];
+
+        const merged = [...sheets];
+        merged[0] = mergeCsvIntoSheet(merged[0], headers.value, parsedRows.value);
+
+        await wsdStore.saveSheetSnapshot(SHEET_SNAPSHOT_KEY, merged);
+
+        emit("imported", { details_saved: parsedRows.value.length, skipped: 0 });
+        close();
     } catch (err) {
-        console.error("Preview failed:", err);
+        console.error("[import] failed to save merged snapshot", err);
+        parseError.value = "Import failed while saving — check the console.";
     } finally {
-        busy.value = false;
+        importing.value = false;
     }
 }
-
-async function runCommit() {
-    busy.value = true;
-    try {
-        const rows = previewRows.value
-            .filter((r) => r.valid)
-            .map((r) => ({
-                event_name: r.event_name,
-                channel_name: r.channel_name,
-                start_date: r.start_date,
-                end_date: r.end_date,
-                fields: r.fields,
-            }));
-        const data = await wsdStore.commitImport(rows);
-        result.value = data;
-        step.value = "done";
-    } catch (err) {
-        console.error("Import failed:", err);
-    } finally {
-        busy.value = false;
-    }
-}
-
-defineExpose({ open });
 </script>

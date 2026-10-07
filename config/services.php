@@ -41,4 +41,9 @@ return [
         'api_username' => env('NETO_API_USERNAME'),
     ],
 
+    'google' => [
+        'wsd_spreadsheet_id'  => env('WSD_SPREADSHEET_ID'),
+        'wsd_webhook_secret'  => env('WSD_WEBHOOK_SECRET'),
+    ],
+
 ];

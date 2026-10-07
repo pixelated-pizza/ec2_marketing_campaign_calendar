@@ -34,10 +34,12 @@ class UserService
      */
     public function login(string $email, string $password, bool $remember = false): ?User
     {
-        // 🔒 Check MillsTrading email
-        if (!str_starts_with($email, 'millstrading.')) {
+
+        $domain = strtolower(substr(strrchr($email, '@'), 1));
+
+        if (!in_array($domain, ['millsbrands.com.au'], true)) {
             throw ValidationException::withMessages([
-                'email' => ['Use your MillsTrading email to sign in.']
+                'email' => ['Use your MillsBrands email to sign in.']
             ]);
         }
 
@@ -62,9 +64,11 @@ class UserService
 
         $email = $payload['email'] ?? null;
 
-        if (!$email || !str_starts_with($email, 'millstrading.')) {
+        $domain = strtolower(substr(strrchr($email, '@'), 1));
+
+        if (!in_array($domain, ['millsbrands.com.au'], true)) {
             throw ValidationException::withMessages([
-                'email' => ['Use your MillsTrading email to sign in.']
+                'email' => ['Use your MillsBrands email to sign in.']
             ]);
         }
 

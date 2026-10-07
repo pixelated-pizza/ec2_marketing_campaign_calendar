@@ -1,49 +1,40 @@
 <template>
-  <div class="layout-topbar">
-    <div class="layout-topbar-logo-container">
-      <button class="layout-menu-button layout-topbar-action" @click="toggleMenu">
-        <i class="pi pi-bars"></i>
-      </button>
-      <router-link to="/" class="layout-topbar-logo">
-        <span>MarketMap</span>
-      </router-link>
-    </div>
+    <header
+        class="sticky top-0 z-30 flex h-[64px] w-full shrink-0 items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900 md:px-6"
+    >
+        <div class="flex items-center gap-3">
+            <button
+                type="button"
+                aria-label="Toggle sidebar"
+                class="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 dark:border-gray-800 dark:text-gray-400 dark:hover:bg-white/5"
+                @click="toggleMenu"
+            >
+                <i :class="['pi', isMobileOpen ? 'pi-times' : 'pi-bars']"></i>
+            </button>
 
-    <div class="layout-topbar-actions">
-      <div class="layout-config-menu">
-        <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
-          <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
-        </button>
+            <router-link to="/dashboard" class="text-lg font-semibold text-gray-800 dark:text-white/90 xl:hidden">
+                MarketMap
+            </router-link>
+        </div>
 
-        <!-- <div class="relative">
-          <Button
-            icon="pi pi-bell"
-            rounded
-            outlined
-            severity="contrast"
-            class="layout-topbar-action hover:text-yellow-400 transition"
-            @click="notificationsOpen = !notificationsOpen"
-          />
+        <div class="flex items-center gap-3">
+            <button
+                type="button"
+                aria-label="Toggle dark mode"
+                class="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-800 dark:text-gray-400 dark:hover:bg-white/5"
+                @click="toggleDarkMode"
+            >
+                <i :class="['pi', isDarkTheme ? 'pi-moon' : 'pi-sun']"></i>
+            </button>
 
-          <span
-            v-if="newNotifications.length"
-            class="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5"
-          >
-            {{ newNotifications.length }}
-          </span>
-        </div> -->
-      </div>
-    </div>
-  </div>
+            <UserMenu />
+        </div>
+    </header>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import Button from 'primevue/button';
+import UserMenu from './UserMenu.vue';
 import { useLayout } from '@/js/layouts/composables/layout';
 
-const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
-
-const notificationsOpen = ref(false);
-const newNotifications = ref([]);
+const { toggleMenu, toggleDarkMode, isDarkTheme, isMobileOpen } = useLayout();
 </script>
