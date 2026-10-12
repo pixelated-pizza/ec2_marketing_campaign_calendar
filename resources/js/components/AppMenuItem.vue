@@ -18,7 +18,7 @@
             >
                 <i :class="item.icon"></i>
             </span>
-            <span v-if="isSidebarWide" class="truncate">{{ item.label }}</span>
+            <span v-if="isSidebarWide" class="min-w-0 leading-5">{{ item.label }}</span>
         </router-link>
     </li>
 </template>

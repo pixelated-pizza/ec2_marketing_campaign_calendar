@@ -20,6 +20,7 @@
         >
             <div class="border-b border-gray-200 pb-3 dark:border-gray-800">
                 <span class="block truncate text-theme-sm font-medium text-gray-700 dark:text-gray-300">{{ userName }}</span>
+                <span v-if="userEmail" class="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">{{ userEmail }}</span>
                 <span v-if="userRole" class="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">{{ userRole }}</span>
             </div>
 
@@ -75,6 +76,8 @@ const root = ref(null);
 const open = ref(false);
 const showLogoutDialog = ref(false);
 const loggingOut = ref(false);
+
+const userEmail = computed(() => userStore.email);
 
 const userName = computed(() => userStore.name);
 const userRole = computed(() => userStore.role_name);

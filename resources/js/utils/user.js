@@ -6,6 +6,7 @@ export const useUserStore = defineStore("user", {
   state: () => ({
     name: null,
     role_name: null,
+    email: null,
   }),
   actions: {
     async fetchUser() {
@@ -13,6 +14,7 @@ export const useUserStore = defineStore("user", {
         const res = await getName();
         this.name = res.name;
         this.role_name = res.role_name;
+        this.email = res.email;
       } catch (e) {
         console.error("Failed to fetch user", e);
       }

@@ -176,38 +176,13 @@
 
                 <!-- Data Table -->
                 <div class="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700/60">
-                    <DataTable :value="filteredCampaignsSorted" scrollable scrollHeight="50vh" stripedRows removableSort
-                        size="small" :rowHover="true" responsiveLayout="scroll">
-                        <Column field="name" header="Campaign" sortable>
-                            <template #body="{ data }">
-                                <span class="font-medium text-gray-800 dark:text-gray-200">
-                                    {{ data.channel_name ? `${data.channel_name} - ${data.name}` : data.name }}
-                                </span>
-                            </template>
-                        </Column>
-
-                        <Column field="start_date" header="Start Date" sortable>
-                            <template #body="{ data }">
-                                <span class="text-xs font-mono text-gray-600 dark:text-gray-400">
-                                    {{ new Date(data.start_date).toLocaleDateString("en-GB") }}
-                                </span>
-                            </template>
-                        </Column>
-
-                        <Column field="end_date" header="End Date" sortable>
-                            <template #body="{ data }">
-                                <span class="text-xs font-mono text-gray-600 dark:text-gray-400">
-                                    {{ new Date(data.end_date).toLocaleDateString("en-GB") }}
-                                </span>
-                            </template>
-                        </Column>
-
-                        <template #empty>
-                            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                                No campaigns found matching your search.
-                            </div>
-                        </template>
-                    </DataTable>
+                    <div class="relative" style="height: 50vh" :data-ag-theme-mode="isDark ? 'dark' : 'light'">
+                        <AgGridVue style="position: absolute; width: 100%; height: 100%; left: 0; top: 0"
+                            :theme="gridTheme" :columnDefs="campaignColumnDefs" :rowData="filteredCampaignsSorted"
+                            :defaultColDef="campaignDefaultColDef"
+                            :enableCellTextSelection="true" :ensureDomOrder="true" :suppressCellFocus="true"
+                            :localeText="{ noRowsToShow: 'No campaigns found matching your search.' }" />
+                    </div>
                 </div>
             </div>
         </Dialog>
@@ -215,6 +190,8 @@
 </template>
 <script setup>
 import { ref, onMounted, computed, nextTick, watch } from "vue";
+import { AgGridVue } from "ag-grid-vue3";
+import { useAgGridTheme } from "@/js/composables/useAgGridTheme.js";
 import InternalPromotions from "@/js/components/dashboard/InternalPromotions.vue";
 import ExternalPromotions from "@/js/components/dashboard/ExternalPromotions.vue";
 import CampaignCalendar from "@/js/components/dashboard/CampaignCalendar.vue";
@@ -235,6 +212,11 @@ import Tab from "primevue/tab";
 import TabPanels from "primevue/tabpanels";
 import TabPanel from "primevue/tabpanel";
 import Dialog from "primevue/dialog";
+
+const { isDark, gridTheme } = useAgGridTheme({
+    fontSize: 12,
+    oddRowBackgroundColor: { ref: "foregroundColor", mix: 0.04 },
+});
 
 const activeTab = ref("0");
 const searchTerm = ref("");
@@ -345,6 +327,43 @@ onMounted(async () => {
 watch(activeTab, async () => {
     await nextTick();
 });
+
+// ---------------------------------------------------------------------------
+// Campaign list grid (inside the status modal)
+// ---------------------------------------------------------------------------
+const formatGb = (value) => new Date(value).toLocaleDateString("en-GB");
+const ts = (row, key) => (row && row[key] ? new Date(row[key]).getTime() : 0);
+
+const campaignDefaultColDef = { sortable: true, resizable: true, minWidth: 120 };
+
+const campaignColumnDefs = [
+    {
+        colId: "name",
+        headerName: "Campaign",
+        valueGetter: (p) => (p.data?.channel_name ? `${p.data.channel_name} - ${p.data.name}` : p.data?.name),
+        flex: 1,
+        minWidth: 240,
+        wrapText: true,
+        autoHeight: true,
+        cellClass: "font-medium",
+    },
+    {
+        colId: "start_date",
+        headerName: "Start Date",
+        valueGetter: (p) => formatGb(p.data?.start_date),
+        comparator: (a, b, nodeA, nodeB) => ts(nodeA.data, "start_date") - ts(nodeB.data, "start_date"),
+        width: 140,
+        cellClass: "font-mono text-xs",
+    },
+    {
+        colId: "end_date",
+        headerName: "End Date",
+        valueGetter: (p) => formatGb(p.data?.end_date),
+        comparator: (a, b, nodeA, nodeB) => ts(nodeA.data, "end_date") - ts(nodeB.data, "end_date"),
+        width: 140,
+        cellClass: "font-mono text-xs",
+    },
+];
 </script>
 <style scoped>
 :deep(.campaign-dialog .p-dialog-content) {

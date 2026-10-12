@@ -39,7 +39,7 @@ const model = [
         label: 'Marketing Calendar',
         items: [
             { label: 'Website & Marketplaces Campaigns', icon: 'pi pi-globe', to: '/campaigns', route: 'Campaigns' },
-            { label: 'Website Sales / Promotions - Mytopia & Edisons', icon: 'pi pi-globe', to: '/website_campaigns', route: 'WebsiteCampaigns' },
+            { label: 'Website Sales / Promotions - Mytopia & Edisons', icon: 'pi pi-dollar', to: '/website_campaigns', route: 'WebsiteCampaigns' },
             { label: 'Website Sale Details', icon: 'pi pi-pen-to-square', to: '/website-sale', route: 'WebsiteSale' },
             { label: 'Website Promotion Details', icon: 'pi pi-at', to: '/website-promo', route: 'WebsitePromo' },
             { label: '[Sites] Category Featured SKUs', icon: 'pi pi-asterisk', to: '/category-featured-skus', route: 'CategoryFeaturedSkus' }

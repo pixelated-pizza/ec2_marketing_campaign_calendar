@@ -1,5 +1,5 @@
 <template>
-  <div class="p-4 card">
+  <div class="um-wrapper flex flex-col h-[calc(100vh-120px)] min-h-[500px] p-4 card">
     <h2 class="text-2xl font-bold mb-4">User Management</h2>
 
     <!-- Error banner -->
@@ -13,30 +13,29 @@
       <Button label="Add User" icon="pi pi-plus" class="p-button-sm p-button-primary" @click="openAddDialog" />
     </div>
 
-    <!-- Users Table -->
-    <DataTable :value="users" :paginator="true" :rows="10" :globalFilterFields="['name', 'email', 'role_name']"
-      :filters="filters" responsiveLayout="scroll" class="p-datatable-sm" :loading="authStore.loading || loading">
-
-      <template #loading>
-        <div class="flex justify-center items-center h-32">
-          <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
-          <span class="ml-2 text-blue-500">Loading users...</span>
-        </div>
-
-      </template>
-
-      <Column field="name" header="Name" sortable />
-      <Column field="email" header="Email" sortable />
-      <Column field="role_name" header="Role" sortable />
-      <Column header="Actions">
-        <template #body="slotProps">
-          <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-button-info mr-2"
-            @click="openEditDialog(slotProps.data)" />
-          <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger"
-            @click="confirmDelete(slotProps.data)" />
-        </template>
-      </Column>
-    </DataTable>
+    <!-- Users Grid -->
+    <div
+      class="relative flex-1 min-h-[300px] border border-gray-300 dark:border-zinc-700 rounded overflow-hidden"
+      :data-ag-theme-mode="isDark ? 'dark' : 'light'"
+    >
+      <AgGridVue
+        style="position: absolute; width: 100%; height: 100%; left: 0; top: 0"
+        :theme="gridTheme"
+        :columnDefs="columnDefs"
+        :rowData="users"
+        :defaultColDef="defaultColDef"
+        :getRowId="getRowId"
+        :quickFilterText="globalFilter"
+        :loading="authStore.loading || loading"
+        :pagination="true"
+        :paginationPageSize="10"
+        :paginationPageSizeSelector="[10, 20, 50]"
+        :enableCellTextSelection="true"
+        :ensureDomOrder="true"
+        :suppressCellFocus="true"
+        :localeText="{ noRowsToShow: 'No users found' }"
+      />
+    </div>
 
     <!-- Add / Edit Dialog -->
     <Dialog v-model:visible="dialogVisible" :header="isEditing ? 'Edit User' : 'Add User'" modal
@@ -73,13 +72,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue';
-import { FilterMatchMode } from '@primevue/core/api';
+import { ref, reactive, onMounted } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
+import { AgGridVue } from 'ag-grid-vue3';
 
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Dialog from 'primevue/dialog';
@@ -89,19 +86,18 @@ import ConfirmDialog from 'primevue/confirmdialog';
 
 import { useAuthStore } from '@/js/stores/useAuthStore';
 import { fetchUsers, createUser, updateUser, deleteUser } from '@/js/api/user_mgmt_api';
+import { useAgGridTheme } from '@/js/composables/useAgGridTheme.js';
+import ExcelSetFilter from '@/js/components/utils/ExcelSetFilter.vue';
 
 const authStore = useAuthStore();
 const confirm = useConfirm();
 const toast = useToast();
 
+const { isDark, gridTheme } = useAgGridTheme();
+
 const users = ref([]);
 const loading = ref(false);
 const globalFilter = ref('');
-const filters = reactive({ global: { value: null, matchMode: FilterMatchMode.CONTAINS } });
-
-watch(globalFilter, (val) => {
-  filters.global.value = val;
-});
 
 const dialogVisible = ref(false);
 const isEditing = ref(false);
@@ -201,12 +197,65 @@ function confirmDelete(row) {
     },
   });
 }
+
+// ---------------------------------------------------------------------------
+// Grid
+// ---------------------------------------------------------------------------
+const getRowId = (params) => String(params.data.id);
+
+function iconButton(iconClass, title, colorClasses, onClick) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.title = title;
+  btn.setAttribute('aria-label', title);
+  btn.className = `inline-flex h-8 w-8 items-center justify-center rounded-full ${colorClasses}`;
+  btn.innerHTML = `<i class="pi ${iconClass}"></i>`;
+  btn.addEventListener('click', onClick);
+  return btn;
+}
+
+function actionsRenderer(params) {
+  const wrap = document.createElement('div');
+  wrap.className = 'flex items-center gap-1';
+  wrap.appendChild(
+    iconButton('pi-pencil', 'Edit user', 'text-sky-500 hover:bg-sky-500/10', () => openEditDialog(params.data)),
+  );
+  wrap.appendChild(
+    iconButton('pi-trash', 'Delete user', 'text-red-500 hover:bg-red-500/10', () => confirmDelete(params.data)),
+  );
+  return wrap;
+}
+
+const defaultColDef = {
+  sortable: true,
+  resizable: true,
+  filter: ExcelSetFilter,
+  floatingFilter: false,
+  flex: 1,
+  minWidth: 160,
+};
+
+const columnDefs = [
+  { colId: 'name', headerName: 'Name', field: 'name' },
+  { colId: 'email', headerName: 'Email', field: 'email' },
+  { colId: 'role_name', headerName: 'Role', field: 'role_name', maxWidth: 220 },
+  {
+    colId: 'actions',
+    headerName: 'Actions',
+    cellRenderer: actionsRenderer,
+    sortable: false,
+    filter: false,
+    resizable: false,
+    flex: 0,
+    width: 120,
+    pinned: 'right',
+  },
+];
 </script>
 
-<style scoped>
-:deep(.p-datatable-mask),
-:deep(.p-datatable-loading-overlay) {
-  background: transparent !important;
-  backdrop-filter: none !important;
+<style>
+.um-wrapper .ag-cell {
+  display: flex;
+  align-items: center;
 }
 </style>

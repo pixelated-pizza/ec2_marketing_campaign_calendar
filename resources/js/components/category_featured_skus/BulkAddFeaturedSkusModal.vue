@@ -60,186 +60,15 @@
                 </span>
             </div>
 
-            <DataTable
-                :value="sortedRows"
-                editMode="cell"
-                @cell-edit-complete="onCellEdit"
-                tableStyle="min-width: 80rem"
-                :rowClass="stockRowClass"
-            >
-                <Column field="sku" header="SKU" style="min-width: 120px">
-                    <template #body="{ data }">
-                        <span class="font-mono font-medium">{{
-                            data.sku
-                        }}</span>
-                    </template>
-                </Column>
-                <Column field="rrp" header="RRP" style="min-width: 100px">
-                    <template #body="{ data }">{{
-                        formatPrice(data.rrp)
-                    }}</template>
-                </Column>
-                <Column
-                    field="website_price"
-                    header="Website Price"
-                    style="min-width: 120px"
-                >
-                    <template #body="{ data }">{{
-                        formatPrice(data.website_price)
-                    }}</template>
-                </Column>
-                <Column
-                    field="special_price"
-                    header="Special Price"
-                    style="min-width: 120px"
-                >
-                    <template #body="{ data }">{{
-                        data.special_price
-                            ? formatPrice(data.special_price)
-                            : "—"
-                    }}</template>
-                </Column>
-                <Column field="qty" header="SOH" style="min-width: 80px">
-                    <template #body="{ data }">
-                        <span
-                            :class="stockTextClass(data.qty)"
-                            class="font-semibold"
-                        >
-                            {{ data.qty ?? "0" }}
-                        </span>
-                    </template>
-                </Column>
-                <Column
-                    field="category_name"
-                    header="Category"
-                    style="min-width: 150px"
-                >
-                    <template #body="{ data }">{{
-                        data.category_name || "—"
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" />
-                    </template>
-                </Column>
-                <Column
-                    field="block_id"
-                    header="Block ID"
-                    style="min-width: 120px"
-                >
-                    <template #body="{ data }">{{
-                        data.block_id || "—"
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" />
-                    </template>
-                </Column>
-                <Column
-                    field="block_name"
-                    header="Block Name"
-                    style="min-width: 130px"
-                >
-                    <template #body="{ data }">{{
-                        data.block_name || "—"
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" />
-                    </template>
-                </Column>
-                <Column
-                    field="identifier"
-                    header="Identifier"
-                    style="min-width: 120px"
-                >
-                    <template #body="{ data }">{{
-                        data.identifier || "—"
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" />
-                    </template>
-                </Column>
-                <Column field="type" header="Type" style="min-width: 100px">
-                    <template #body="{ data }">{{ data.type || "—" }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" />
-                    </template>
-                </Column>
-                <Column
-                    field="website"
-                    header="Website"
-                    style="min-width: 120px"
-                >
-                    <template #body="{ data }">{{
-                        data.website || "—"
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" />
-                    </template>
-                </Column>
-                <Column
-                    field="product_landing_page"
-                    header="Product Landing Page"
-                    style="min-width: 170px"
-                >
-                    <template #body="{ data }">{{
-                        data.product_landing_page || "—"
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" />
-                    </template>
-                </Column>
-                <Column
-                    field="creative_location"
-                    header="Creative Location"
-                    style="min-width: 150px"
-                >
-                    <template #body="{ data }">{{
-                        data.creative_location || "—"
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" />
-                    </template>
-                </Column>
-                <Column
-                    field="landing_page"
-                    header="Landing Page"
-                    style="min-width: 130px"
-                >
-                    <template #body="{ data }">{{
-                        data.landing_page || "—"
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" />
-                    </template>
-                </Column>
-                <Column
-                    field="price_change"
-                    header="Price Change"
-                    style="min-width: 120px"
-                >
-                    <template #body="{ data }">{{
-                        data.price_change || "—"
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" />
-                    </template>
-                </Column>
-                <Column field="note" header="Note" style="min-width: 150px">
-                    <template #body="{ data }">{{ data.note || "—" }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" />
-                    </template>
-                </Column>
-                <Column header="" style="min-width: 60px">
-                    <template #body="{ index }">
-                        <Button
-                            icon="pi pi-trash"
-                            severity="danger"
-                            text
-                            @click="removeRow(index)"
-                        />
-                    </template>
-                </Column>
-            </DataTable>
+            <div class="bulk-grid relative border border-gray-300 dark:border-zinc-700 rounded overflow-hidden"
+                style="height: 55vh" :data-ag-theme-mode="isDark ? 'dark' : 'light'">
+                <AgGridVue style="position: absolute; width: 100%; height: 100%; left: 0; top: 0" :theme="gridTheme"
+                    :columnDefs="columnDefs" :rowData="sortedRows" :defaultColDef="defaultColDef"
+                    :getRowClass="getRowClass" :singleClickEdit="true" :stopEditingWhenCellsLoseFocus="true"
+                    :enterNavigatesVertically="true" :enterNavigatesVerticallyAfterEdit="true"
+                    :enableCellTextSelection="true" :ensureDomOrder="true"
+                    :localeText="{ noRowsToShow: 'No SKUs to add' }" />
+            </div>
             <small class="text-gray-500">Click any cell to edit.</small>
         </div>
         <template #footer>
@@ -272,6 +101,8 @@
 import { ref, computed } from "vue";
 import { useCategoryFeaturedSkusStore } from "@/js/stores/category_featured_skus_store.js";
 import { useNetoStore } from "@/js/stores/neto_store.js";
+import { AgGridVue } from "ag-grid-vue3";
+import { useAgGridTheme } from "@/js/composables/useAgGridTheme.js";
 
 const props = defineProps({ modelValue: Boolean });
 const emit = defineEmits(["update:modelValue"]);
@@ -280,6 +111,8 @@ const visible = computed({
     get: () => props.modelValue,
     set: (val) => emit("update:modelValue", val),
 });
+
+const { isDark, gridTheme } = useAgGridTheme({ fontSize: 12 });
 
 const store = useCategoryFeaturedSkusStore();
 const netoStore = useNetoStore();
@@ -342,10 +175,8 @@ const sortedRows = computed(() =>
     [...rows.value].sort((a, b) => (a.qty ?? 0) - (b.qty ?? 0))
 );
 
-function stockRowClass(data) {
-    const qty = data.qty ?? 0;
-    if (qty <= 5)  return '!bg-red-500';
-    return '';
+function getRowClass(params) {
+    return (params.data?.qty ?? 0) <= 5 ? "bulk-low-stock" : "";
 }
 
 function stockTextClass(qty) {
@@ -356,13 +187,12 @@ function stockTextClass(qty) {
     return 'text-green-600';
 }
 
-function onCellEdit(event) {
-    const { data, newValue, field } = event;
-    data[field] = newValue;
-}
+// AG Grid writes edits straight into the row objects, so no edit handler is needed.
 
-function removeRow(index) {
-    rows.value.splice(index, 1);
+// Remove by row object (the grid is sorted differently from `rows`, so an index would hit the wrong row)
+function removeRow(row) {
+    const i = rows.value.indexOf(row);
+    if (i !== -1) rows.value.splice(i, 1);
 }
 
 async function submit() {
@@ -384,4 +214,102 @@ function formatPrice(value) {
         currency: "AUD",
     }).format(value);
 }
+
+// ---------------------------------------------------------------------------
+// Grid
+// ---------------------------------------------------------------------------
+const dash = (p) => p.value || "\u2014";
+
+const editableText = (field, headerName, width) => ({
+    colId: field,
+    field,
+    headerName,
+    width,
+    editable: true,
+    valueFormatter: dash,
+});
+
+function deleteRenderer(params) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.title = "Remove";
+    btn.setAttribute("aria-label", "Remove row");
+    btn.className = "inline-flex h-8 w-8 items-center justify-center rounded-full text-red-500 hover:bg-red-500/10";
+    btn.innerHTML = '<i class="pi pi-trash"></i>';
+    btn.addEventListener("click", () => removeRow(params.data));
+    return btn;
+}
+
+const defaultColDef = {
+    sortable: false,
+    resizable: true,
+    filter: false,
+    editable: false,
+    minWidth: 80,
+    wrapHeaderText: true,
+    autoHeaderHeight: true,
+};
+
+const columnDefs = [
+    {
+        colId: "sku",
+        field: "sku",
+        headerName: "SKU",
+        pinned: "left",
+        width: 150,
+        cellClass: "font-mono font-medium",
+    },
+    { colId: "rrp", field: "rrp", headerName: "RRP", width: 110, valueFormatter: (p) => formatPrice(p.value) },
+    {
+        colId: "website_price",
+        field: "website_price",
+        headerName: "Website Price",
+        width: 130,
+        valueFormatter: (p) => formatPrice(p.value),
+    },
+    {
+        colId: "special_price",
+        field: "special_price",
+        headerName: "Special Price",
+        width: 130,
+        valueFormatter: (p) => (p.value ? formatPrice(p.value) : "\u2014"),
+    },
+    {
+        colId: "qty",
+        headerName: "SOH",
+        valueGetter: (p) => String(p.data?.qty ?? "0"),
+        cellClass: (p) => `font-semibold ${stockTextClass(p.data?.qty)}`,
+        width: 90,
+    },
+    editableText("category_name", "Category", 150),
+    editableText("block_id", "Block ID", 120),
+    editableText("block_name", "Block Name", 130),
+    editableText("identifier", "Identifier", 120),
+    editableText("type", "Type", 100),
+    editableText("website", "Website", 120),
+    editableText("product_landing_page", "Product Landing Page", 170),
+    editableText("creative_location", "Creative Location", 150),
+    editableText("landing_page", "Landing Page", 130),
+    editableText("price_change", "Price Change", 120),
+    editableText("note", "Note", 150),
+    {
+        colId: "remove",
+        headerName: "",
+        cellRenderer: deleteRenderer,
+        pinned: "right",
+        width: 70,
+        resizable: false,
+    },
+];
 </script>
+
+<style>
+.bulk-grid .ag-row.bulk-low-stock {
+    background-color: #ef4444 !important;
+}
+
+.bulk-grid .ag-cell {
+    display: flex;
+    align-items: center;
+}
+</style>

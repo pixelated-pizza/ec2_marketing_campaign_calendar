@@ -1,11 +1,10 @@
 <template>
-    <div
-        class="flex flex-col w-full h-full card px-6 overflow-x-auto py-5"
-    >
+    <div class="wpa-wrapper flex flex-col w-full h-[calc(100vh-120px)] min-h-[500px] card px-6 py-5">
         <h4 class="text-gray-200 font-semibold text-lg text-center p-2 mt-5">
             Archived Website Promotions
         </h4>
-        <div>
+
+        <div class="flex flex-col flex-1 min-h-0">
             <template v-if="loading">
                 <div class="flex flex-col gap-4 w-full h-full mt-5">
                     <p class="text-gray-400 text-lg">Loading Data...</p>
@@ -19,191 +18,27 @@
                     </div>
                 </div>
             </template>
-            <div v-else>
-                <div>
-                    <DataTable
-                        :value="archiveStore.archivedPromotions"
-                        dataKey="promo_id"
-                        v-model:expandedRows="expandedRows"
-                        class="p-datatable-sm"
-                        rowHover
-                        paginator
-                        :rows="20"
-                    >
-                        <Column expander style="width: 3rem" />
-                        <Column field="promo_name" header="Promotion" />
-                        <Column header="Scope">
-                            <template #body="{ data }">
-                                <div class="flex gap-2">
-                                    <span
-                                        class="text-md px-2 py-1 rounded"
-                                        :class="
-                                            data.does_include_parts
-                                                ? 'bg-green-600'
-                                                : 'bg-red-600 text-white'
-                                        "
-                                    >
-                                        {{
-                                            data.does_include_parts
-                                                ? "Parts Included"
-                                                : "Parts Excluded"
-                                        }}
-                                    </span>
 
-                                    <span
-                                        class="text-md px-2 py-1 rounded"
-                                        :class="
-                                            data.does_include_marketplace_products
-                                                ? 'bg-green-600'
-                                                : 'bg-red-600 text-white'
-                                        "
-                                    >
-                                        {{
-                                            data.does_include_marketplace_products
-                                                ? "Marketplace Included"
-                                                : "Marketplace Excluded"
-                                        }}
-                                    </span>
-                                </div>
-                            </template>
-                        </Column>
-                        <Column header="Website">
-                            <template #body="{ data }">
-                                {{ data.website_store || "-" }}
-                            </template>
-                        </Column>
-                        <Column header="Status">
-                            <template #body="{ data }">
-                                <span
-                                    class="text-md font-bold"
-                                    :class="statusBadge(data.status)"
-                                >
-                                    {{ data.status }}
-                                </span>
-                            </template>
-                        </Column>
-                        <Column header="Actions" style="width: 10rem">
-                            <template #body="{ data }">
-                                <Button
-                                    icon="pi pi-folder"
-                                    severity="warn"
-                                    rounded
-                                    text
-                                    size="medium"
-                                    label="Unarchive"
-                                    @click="confirmUnarchive(data)"
-                                />
-                            </template>
-                        </Column>
-                        <template #expansion="{ data }">
-                            <div class="p-4 bg-black rounded-lg">
-                                <div
-                                    class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-white"
-                                >
-                                    <div>
-                                        <p class="text-md text-gray-300">
-                                            Description
-                                        </p>
-                                        <p
-                                            class="break-words text-green-500 font-bold"
-                                        >
-                                            {{
-                                                data.description ||
-                                                "No description"
-                                            }}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p class="text-md text-gray-300">
-                                            Terms & Conditions
-                                        </p>
-                                        <p
-                                            class="break-words text-red-400 font-bold"
-                                        >
-                                            {{
-                                                Array.isArray(
-                                                    data.terms_and_conditions,
-                                                )
-                                                    ? data.terms_and_conditions.join(
-                                                          ", ",
-                                                      )
-                                                    : data.terms_and_conditions ||
-                                                      "-"
-                                            }}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p class="text-md text-gray-300">
-                                            Coupon Label
-                                        </p>
-                                        <p>{{ data.coupon_label || "-" }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-md text-gray-300">
-                                            Coupon Code
-                                        </p>
-                                        <p>{{ data.coupon_code || "-" }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-md text-gray-300">
-                                            Creatives
-                                        </p>
-                                        <p class="truncate">
-                                            {{
-                                                Array.isArray(data.creatives)
-                                                    ? data.creatives.join(", ")
-                                                    : data.creatives || "-"
-                                            }}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p class="text-md text-gray-300">
-                                            Start Date
-                                        </p>
-                                        <p class="text-green-500">
-                                            {{
-                                                dayjs
-                                                    .utc(data.start_date)
-                                                    .tz()
-                                                    .format("DD-MM-YYYY")
-                                            }}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p class="text-md text-gray-300">
-                                            End Date
-                                        </p>
-                                        <p class="text-green-500">
-                                            {{
-                                                dayjs
-                                                    .utc(data.end_date)
-                                                    .tz()
-                                                    .format("DD-MM-YYYY")
-                                            }}
-                                        </p>
-                                    </div>
-                                </div>
-                                <p class="text-[11px] text-gray-300 mt-4">
-                                    Last Updated:
-                                    {{
-                                        dayjs(data.updated_at).format(
-                                            "DD-MM-YYYY HH:mm",
-                                        )
-                                    }}
-                                </p>
-                            </div>
-                        </template>
-                        <template #empty>
-                            <div class="text-center py-10 text-gray-400">
-                                <i class="pi pi-inbox text-3xl mb-3 block"></i>
-                                <p class="text-lg font-semibold">No Data Yet</p>
-                                <p class="text-sm">
-                                    Archived website promos will
-                                    appear here.
-                                </p>
-                            </div>
-                        </template>
-                    </DataTable>
+            <div v-else class="flex flex-col flex-1 min-h-0">
+                <div
+                    class="relative flex-1 min-h-[300px] border border-gray-300 dark:border-zinc-700 rounded overflow-hidden"
+                    :data-ag-theme-mode="isDark ? 'dark' : 'light'"
+                >
+                    <AgGridVue
+                        style="position: absolute; width: 100%; height: 100%; left: 0; top: 0"
+                        :theme="gridTheme"
+                        :columnDefs="columnDefs"
+                        :rowData="archiveStore.archivedPromotions"
+                        :defaultColDef="defaultColDef"
+                        :getRowId="getRowId"
+                        :pagination="true"
+                        :paginationPageSize="20"
+                        :paginationPageSizeSelector="[20, 50, 100]"
+                        :enableCellTextSelection="true"
+                        :ensureDomOrder="true"
+                        :suppressCellFocus="true"
+                        :localeText="{ noRowsToShow: 'No archived promotions yet' }"
+                    />
                 </div>
 
                 <Dialog
@@ -215,39 +50,31 @@
                 >
                     <p>Are you sure you want to archive this campaign?</p>
                     <template #footer>
-                        <Button
-                            label="No"
-                            severity="danger"
-                            text
-                            @click="showArchiveDialog = false"
-                        />
-                        <Button
-                            label="Yes"
-                            severity="success"
-                            @click="unArchiveConfirmed"
-                        />
+                        <Button label="No" severity="danger" text @click="showArchiveDialog = false" />
+                        <Button label="Yes" severity="success" @click="unArchiveConfirmed" />
                     </template>
                 </Dialog>
             </div>
         </div>
     </div>
 </template>
+
 <script setup>
 import { onMounted, ref, getCurrentInstance } from "vue";
 import dayjs from "dayjs";
+import { AgGridVue } from "ag-grid-vue3";
 import { useArchivePromosStore } from "@/js/stores/archive_promos_store.js";
 import Dialog from "primevue/dialog";
 import Button from "primevue/button";
-import DataTable from "primevue/datatable";
-import Column from "primevue/column";
 import Skeleton from "primevue/skeleton";
+import { useAgGridTheme } from "@/js/composables/useAgGridTheme.js";
+import ExcelSetFilter from "@/js/components/utils/ExcelSetFilter.vue";
 
-import {
-    updateArchivedPromotion,
-    fetchUnarchivePromotion,
-} from "@/js/api/archive_promos_api";
+import { fetchUnarchivePromotion } from "@/js/api/archive_promos_api";
 import { fetchStores } from "@/js/api/website_campaign_api.js";
 const archiveStore = useArchivePromosStore();
+
+const { isDark, gridTheme } = useAgGridTheme();
 
 const stores = ref([]);
 const $instance = getCurrentInstance();
@@ -255,7 +82,6 @@ const toastr = $instance.appContext.config.globalProperties.$toastr;
 
 const showArchiveDialog = ref(false);
 const promoToUnarchive = ref(null);
-const expandedRows = ref({});
 
 const loading = ref(true);
 
@@ -313,4 +139,173 @@ const statusBadge = (status) => {
             return "bg-gray-300 px-2 py-1 rounded";
     }
 };
+
+const getRowId = (params) => String(params.data.promo_id);
+
+const joinIfArray = (value) => (Array.isArray(value) ? value.join(", ") : value);
+const formatDay = (value) => (value ? dayjs.utc(value).tz().format("DD-MM-YYYY") : "-");
+const timestamp = (row, key) => (row && row[key] ? dayjs(row[key]).valueOf() : 0);
+
+function statusRenderer(params) {
+    const el = document.createElement("span");
+    el.className = `text-md font-bold ${statusBadge(params.value)}`;
+    el.textContent = params.value;
+    return el;
+}
+
+function scopeRenderer(params) {
+    const wrap = document.createElement("div");
+    wrap.className = "flex flex-wrap gap-2";
+
+    (params.value || "").split(" | ").forEach((label) => {
+        const included = label.endsWith("Included");
+        const el = document.createElement("span");
+        el.className = `text-md px-2 py-1 rounded ${included ? "bg-green-600" : "bg-red-600 text-white"}`;
+        el.textContent = label;
+        wrap.appendChild(el);
+    });
+
+    return wrap;
+}
+
+function unarchiveRenderer(params) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className =
+        "inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium text-amber-500 hover:bg-amber-500/10";
+    btn.innerHTML = '<i class="pi pi-folder"></i><span>Unarchive</span>';
+    btn.addEventListener("click", () => confirmUnarchive(params.data));
+    return btn;
+}
+
+const defaultColDef = {
+    sortable: true,
+    resizable: true,
+    filter: ExcelSetFilter,
+    floatingFilter: false,
+    minWidth: 100,
+    wrapHeaderText: true,
+    autoHeaderHeight: true,
+};
+
+const columnDefs = [
+    {
+        colId: "promo_name",
+        headerName: "Promotion",
+        field: "promo_name",
+        pinned: "left",
+        width: 300,
+        wrapText: true,
+        autoHeight: true,
+    },
+    {
+        colId: "scope",
+        headerName: "Scope",
+        valueGetter: (p) =>
+            [
+                p.data?.does_include_parts ? "Parts Included" : "Parts Excluded",
+                p.data?.does_include_marketplace_products ? "Marketplace Included" : "Marketplace Excluded",
+            ].join(" | "),
+        cellRenderer: scopeRenderer,
+        width: 340,
+        autoHeight: true,
+    },
+    {
+        colId: "website_store",
+        headerName: "Website",
+        valueGetter: (p) => p.data?.website_store || "-",
+        width: 160,
+    },
+    {
+        colId: "status",
+        headerName: "Status",
+        valueGetter: (p) => p.data?.status,
+        cellRenderer: statusRenderer,
+        width: 130,
+    },
+    {
+        colId: "description",
+        headerName: "Description",
+        valueGetter: (p) => p.data?.description || "No description",
+        width: 300,
+        wrapText: true,
+        autoHeight: true,
+    },
+    {
+        colId: "terms_and_conditions",
+        headerName: "Terms & Conditions",
+        valueGetter: (p) => joinIfArray(p.data?.terms_and_conditions) || "-",
+        width: 300,
+        wrapText: true,
+        autoHeight: true,
+    },
+    {
+        colId: "coupon_label",
+        headerName: "Coupon Label",
+        valueGetter: (p) => p.data?.coupon_label || "-",
+        width: 150,
+    },
+    {
+        colId: "coupon_code",
+        headerName: "Coupon Code",
+        valueGetter: (p) => p.data?.coupon_code || "-",
+        width: 150,
+    },
+    {
+        colId: "creatives",
+        headerName: "Creatives",
+        valueGetter: (p) => joinIfArray(p.data?.creatives) || "-",
+        width: 200,
+        wrapText: true,
+        autoHeight: true,
+    },
+    {
+        colId: "start_date",
+        headerName: "Start Date",
+        valueGetter: (p) => formatDay(p.data?.start_date),
+        comparator: (a, b, nodeA, nodeB) => timestamp(nodeA.data, "start_date") - timestamp(nodeB.data, "start_date"),
+        cellClass: "text-green-500",
+        width: 140,
+    },
+    {
+        colId: "end_date",
+        headerName: "End Date",
+        valueGetter: (p) => formatDay(p.data?.end_date),
+        comparator: (a, b, nodeA, nodeB) => timestamp(nodeA.data, "end_date") - timestamp(nodeB.data, "end_date"),
+        cellClass: "text-green-500",
+        width: 140,
+    },
+    {
+        colId: "updated_at",
+        headerName: "Last Updated",
+        valueGetter: (p) => (p.data?.updated_at ? dayjs(p.data.updated_at).format("DD-MM-YYYY HH:mm") : "-"),
+        comparator: (a, b, nodeA, nodeB) => timestamp(nodeA.data, "updated_at") - timestamp(nodeB.data, "updated_at"),
+        cellClass: "text-xs text-gray-400",
+        width: 160,
+    },
+    {
+        colId: "actions",
+        headerName: "Actions",
+        cellRenderer: unarchiveRenderer,
+        pinned: "right",
+        width: 150,
+        sortable: false,
+        filter: false,
+        resizable: false,
+    },
+];
 </script>
+
+<style>
+.wpa-wrapper .ag-cell {
+    display: flex;
+    align-items: center;
+    line-height: 1.45;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.wpa-wrapper .ag-cell.ag-cell-wrap-text {
+    word-break: break-word;
+}
+</style>

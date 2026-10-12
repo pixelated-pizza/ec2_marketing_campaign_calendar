@@ -25,8 +25,11 @@
                         {{ visibleCount }} of {{ totalCount }} rows
                     </span>
 
-                    <Button label="Clear filters" icon="pi pi-filter-slash" size="small" text
-                        class="text-xs py-1 px-2" @click="clearFilters" />
+                    <Button label="Filter" icon="pi pi-filter" size="small" :outlined="!filtersOn"
+                        class="text-xs py-1 px-2" :aria-pressed="filtersOn" @click="toggleFilters" />
+
+                    <Button label="Clear filters" icon="pi pi-filter-slash" size="small" text class="text-xs py-1 px-2"
+                        @click="clearFilters" />
                 </div>
                 <div class="flex items-center gap-2">
                     <Button label="Add row" icon="pi pi-plus" size="small" outlined class="text-xs py-1 px-2"
@@ -45,21 +48,24 @@
             </div>
 
             <div class="flex-1 min-height-0 border border-gray-300 dark:border-zinc-700 rounded overflow-hidden"
-                style="position: relative;" :data-ag-theme-mode="isDark ? 'dark' : 'light'">
+                style="position: relative;" :data-ag-theme-mode="isDark ? 'dark' : 'light'" :class="{ 'wsd-filters-off': !filtersOn }">
                 <AgGridVue style="position:absolute; width:100%; height:100%; left:0; top:0;" :theme="gridTheme"
-                    :columnDefs="columnDefs" :rowData="rowData" :defaultColDef="defaultColDef"
-                    :getRowId="getRowId" :rowSelection="rowSelection" :suppressFieldDotNotation="true"
-                    :enableCellTextSelection="true" :ensureDomOrder="true" :stopEditingWhenCellsLoseFocus="true"
-                    :singleClickEdit="false" :quickFilterText="quickFilter" @grid-ready="onGridReady"
-                    @cell-value-changed="onCellValueChanged" @selection-changed="onSelectionChanged"
-                    @filter-changed="updateCounts" @row-data-updated="updateCounts" />
+                    :columnDefs="columnDefs" :rowData="rowData" :defaultColDef="defaultColDef" :getRowId="getRowId"
+                    :rowSelection="rowSelection" :suppressFieldDotNotation="true" :enableCellTextSelection="true"
+                    :ensureDomOrder="true" :stopEditingWhenCellsLoseFocus="true" :singleClickEdit="false"
+                    :quickFilterText="quickFilter" @grid-ready="onGridReady" @cell-value-changed="onCellValueChanged"
+                    @selection-changed="onSelectionChanged" @filter-changed="updateCounts"
+                    @row-data-updated="updateCounts" :enterNavigatesVertically="true"
+                    :enterNavigatesVerticallyAfterEdit="true" :undoRedoCellEditing="true"
+                    :undoRedoCellEditingLimit="50" :selectionColumnDef="{ pinned: 'left', width: 48}"/>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, shallowRef, onMounted, onBeforeUnmount, getCurrentInstance } from "vue";
+import { ref, shallowRef, computed, onMounted, onBeforeUnmount, getCurrentInstance } from "vue";
+import ExcelSetFilter from "@/js/components/utils/ExcelSetFilter.vue";
 import Button from "primevue/button";
 import Skeleton from "primevue/skeleton";
 import { useWSDStore } from "@/js/stores/wsd_store.js";
@@ -69,13 +75,17 @@ import {
     ModuleRegistry,
     AllCommunityModule,
     themeQuartz,
-    colorSchemeVariable,
+    colorSchemeDark,
+    colorSchemeLight,
 } from "ag-grid-community";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 const wsdStore = useWSDStore();
 const toastr = getCurrentInstance().appContext.config.globalProperties.$toastr;
+
+const isDark = ref(document.documentElement.classList.contains("app-dark"));
+let themeObserver = null;
 
 const loading = ref(false);
 const syncing = ref(false);
@@ -88,6 +98,8 @@ const visibleCount = ref(0);
 const totalCount = ref(0);
 const csvInput = ref(null);
 
+const filtersOn = ref(true);
+
 // grid state
 const columnDefs = shallowRef([]);
 const rowData = shallowRef([]);
@@ -96,30 +108,29 @@ let currentHeaders = [];
 let saveTimer = null;
 let ridCounter = 0;
 
-// ---------------------------------------------------------------------------
-// Theme (follows the app's `dark` class on <html>)
-// ---------------------------------------------------------------------------
-const isDark = ref(document.documentElement.classList.contains("dark"));
-let themeObserver = null;
-
-const gridTheme = themeQuartz.withPart(colorSchemeVariable).withParams({
-    fontFamily: "Arial, sans-serif",
-    fontSize: 12,
-    spacing: 5,
-    headerFontSize: 12,
-    headerFontWeight: 600,
-    wrapperBorder: false,
-    // visible grid lines between every row and column (adapts to light/dark)
-    borderColor: { ref: "foregroundColor", mix: 0.22 },
-    rowBorder: true,
-    columnBorder: true,
-    headerColumnBorder: true,
-    headerRowBorder: true,
-});
+const gridTheme = computed(() =>
+    themeQuartz
+        .withPart(isDark.value ? colorSchemeDark : colorSchemeLight)
+        .withParams({
+            fontFamily: "Arial, sans-serif",
+            fontSize: 12,
+            spacing: 5,
+            headerFontSize: 12,
+            headerFontWeight: 600,
+            wrapperBorder: false,
+            borderColor: { ref: "foregroundColor", mix: 0.22 },
+            rowBorder: true,
+            columnBorder: true,
+            headerColumnBorder: true,
+            headerRowBorder: true,
+        })
+);
 
 const MIN_COLUMN_WIDTH = 90;
-const MAX_COLUMN_WIDTH = 480;
+const MAX_COLUMN_WIDTH = 800;
 const CELL_H_PADDING = 32;
+const MAX_HEADER_WIDTH = 220; 
+const HEADER_EXTRA = 56;   
 
 let measureCtx = null;
 function measureTextWidth(text, font = "12px Arial") {
@@ -129,36 +140,49 @@ function measureTextWidth(text, font = "12px Arial") {
 }
 
 function estimateColumnWidth(header, rows) {
-    // longest single word in the header (header text wraps)
-    let maxWidth = 0;
-    for (const word of String(header).split(/\s+/)) {
-        maxWidth = Math.max(maxWidth, measureTextWidth(word, "600 12px Arial"));
-    }
+    const headerText = String(header).replace(/\s+/g, " ").trim();
+    const headerFont = "600 12px Arial";
 
+    // Header: wide enough for one line up to MAX_HEADER_WIDTH,
+    // and never narrower than its longest word
+    let longestWord = 0;
+    for (const word of headerText.split(" ")) {
+        longestWord = Math.max(longestWord, measureTextWidth(word, headerFont));
+    }
+    const headerWidth =
+        Math.max(longestWord, Math.min(measureTextWidth(headerText, headerFont), MAX_HEADER_WIDTH)) +
+        HEADER_EXTRA;
+
+    // Data: the longest single line in the column
+    let dataWidth = 0;
     for (const row of rows) {
         for (const line of String(row[header] ?? "").split(/\r?\n/)) {
-            maxWidth = Math.max(maxWidth, measureTextWidth(line));
+            dataWidth = Math.max(dataWidth, measureTextWidth(line));
         }
     }
+    dataWidth += CELL_H_PADDING;
 
-    return Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, Math.ceil(maxWidth + CELL_H_PADDING)));
+    return Math.min(
+        MAX_COLUMN_WIDTH,
+        Math.max(MIN_COLUMN_WIDTH, Math.ceil(Math.max(headerWidth, dataWidth))),
+    );
 }
 
 const defaultColDef = {
     editable: true,
     resizable: true,
     sortable: true,
-    filter: "agTextColumnFilter",       
-    floatingFilter: true,     
+    filter: ExcelSetFilter,
+    floatingFilter: false,
     filterParams: { debounceMs: 200, buttons: ["reset"] },
     wrapText: true,
-    autoHeight: true,          
+    autoHeight: true,
     wrapHeaderText: true,
     autoHeaderHeight: true,
     minWidth: MIN_COLUMN_WIDTH,
     cellClass: "wsd-cell",
     cellEditor: "agLargeTextCellEditor",
-    cellEditorPopup: true,
+    cellEditorPopup: false,
     cellEditorParams: { maxLength: 10000, rows: 12, cols: 60 },
 };
 
@@ -176,6 +200,15 @@ function nextRid() {
     return `r${ridCounter}`;
 }
 
+function toggleFilters() {
+    filtersOn.value = !filtersOn.value;
+    // like Excel: turning the filter off shows all rows again
+    if (!filtersOn.value) gridApi?.setFilterModel(null);
+}
+
+const FROZEN_HEADERS = ["status", "channel", "event name"];
+const normalizeHeader = (h) => String(h).replace(/\s+/g, " ").trim().toLowerCase();
+
 function buildColumnDefs(headers, rows) {
     return headers.map((h, i) => ({
         colId: `c${i}`,
@@ -183,7 +216,7 @@ function buildColumnDefs(headers, rows) {
         headerName: h.replace(/\s+/g, " ").trim(),
         headerTooltip: h.replace(/\s+/g, " ").trim(),
         width: estimateColumnWidth(h, rows),
-        pinned: undefined,
+        pinned: FROZEN_HEADERS.includes(normalizeHeader(h)) ? "left" : undefined,
     }));
 }
 
@@ -363,7 +396,7 @@ onMounted(async () => {
     loading.value = true;
 
     themeObserver = new MutationObserver(() => {
-        isDark.value = document.documentElement.classList.contains("dark");
+        isDark.value = document.documentElement.classList.contains("app-dark");
     });
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 
@@ -390,17 +423,27 @@ onBeforeUnmount(() => {
 </script>
 
 <style>
-
 .wsd-wrapper .ag-cell.wsd-cell {
-    white-space: pre-wrap;    
-    word-break: break-word;   
+    display: flex;
+    align-items: center;
+    white-space: pre-wrap;
+    word-break: break-word;
     line-height: 1.45;
     padding-top: 6px;
     padding-bottom: 6px;
-    align-items: flex-start;
 }
 
 .wsd-wrapper .ag-header-cell-label {
+    align-items: center;
+}
+
+.wsd-wrapper .wsd-filters-off .ag-header-cell-filter-button,
+.wsd-wrapper .wsd-filters-off .ag-header-cell-menu-button {
+    display: none;
+}
+
+.wsd-wrapper .ag-cell.wsd-cell .ag-cell-wrapper,
+.wsd-wrapper .ag-cell.wsd-cell .ag-cell-value {
     align-items: center;
 }
 </style>

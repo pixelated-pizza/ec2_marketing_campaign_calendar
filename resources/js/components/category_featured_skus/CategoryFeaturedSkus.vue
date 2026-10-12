@@ -1,5 +1,5 @@
 <template>
-    <div class="card">
+    <div class="cfs-wrapper card">
         <!-- Header Actions -->
         <div class="flex items-center mb-4 gap-2">
             <Button label="+ Add Featured SKU" @click="openModal" />
@@ -8,160 +8,26 @@
             <Button label="Clear All" icon="pi pi-trash" severity="danger" @click="clearAllDialogVisible = true" />
         </div>
 
-        <div class="h-[calc(100vh-250px)]">
+        <div class="flex flex-col h-[calc(100vh-250px)] min-h-[400px]">
             <div class="items-center">
-                <h2 class="text-white dark:text-white text-center font-bold text-lg tracking-wide">
+                <h4 class="text-white dark:text-white text-center font-bold text-md tracking-wide">
                     Price & Inventory Tracking
-                </h2>
+                </h4>
             </div>
             <span v-if="lastSynced" class="text-black dark:text-white text-md">
                 Last synced: {{ lastSynced.toLocaleTimeString("en-AU") }}
             </span>
 
-            <DataTable :value="sortedFeaturedSkus" :rowClass="stockRowClass" :loading="store.isLoading" editMode="cell"
-                @cell-edit-complete="onCellEdit" scrollable showGridlines scrollDirection="both" scrollHeight="600px"
-                style="min-width: 100%">
-                <template #empty>No featured SKUs found.</template>
-
-                <Column field="sku" header="SKU" frozen style="min-width: 130px" />
-                <Column field="rrp" header="RRP" style="min-width: 110px">
-                    <template #body="{ data }">{{
-                        formatPrice(data.rrp)
-                    }}</template>
-                </Column>
-                <Column field="website_price" header="Website Price" style="min-width: 130px">
-                    <template #body="{ data }">{{
-                        formatPrice(data.website_price)
-                    }}</template>
-                </Column>
-                <Column field="special_price" header="Special Price" style="min-width: 120px">
-                    <template #body="{ data }">{{
-                        data.special_price
-                            ? formatPrice(data.special_price)
-                            : ""
-                    }}</template>
-                </Column>
-                <Column field="price_change" header="Price Change" style="min-width: 130px">
-                    <template #body="{ data }">
-                        <span v-if="data.price_change && data.price_change != 0" :class="data.price_change > 0
-                            ? 'text-green-600'
-                            : 'text-red-500'
-                            ">
-                            {{ data.price_change > 0 ? "+" : ""
-                            }}{{ formatPrice(data.price_change) }}
-                        </span>
-                        <span v-else class="text-gray-400"></span>
-                    </template>
-                </Column>
-                <Column field="qty" :header="`SOH as of ${today}`" style="min-width: 150px">
-                    <template #body="{ data }">
-                        <span :class="data.qty <= 0 ? 'text-red-500' : ''">
-                            {{ data.qty ?? "0" }}
-                        </span>
-                    </template>
-                </Column>
-                <Column header="Stock Deducted" style="min-width: 140px">
-                    <template #body="{ data }">
-                        <span v-if="getStockDeducted(data) > 0" class="text-red-500 font-medium">
-                            −{{ getStockDeducted(data) }}
-                        </span>
-                        <span v-else class="text-gray-400"></span>
-                    </template>
-                </Column>
-
-                <Column header="Stock Added" style="min-width: 140px">
-                    <template #body="{ data }">
-                        <span v-if="getStockDeducted(data) < 0" class="text-green-600 font-medium">
-                            +{{ Math.abs(getStockDeducted(data)) }}
-                        </span>
-                        <span v-else class="text-gray-400"></span>
-                    </template>
-                </Column>
-                <Column field="category_name" header="Category" style="min-width: 150px">
-                    <template #body="{ data }">{{
-                        data.category_name || ""
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" autofocus />
-                    </template>
-                </Column>
-                <Column field="block_name" header="Block" style="min-width: 130px">
-                    <template #body="{ data }">{{
-                        data.block_name || ""
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" autofocus />
-                    </template>
-                </Column>
-                <Column field="website" header="Website" style="min-width: 120px">
-                    <template #body="{ data }">{{
-                        data.website || ""
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" autofocus />
-                    </template>
-                </Column>
-                <Column field="type" header="Type" style="min-width: 100px">
-                    <template #body="{ data }">{{ data.type || "" }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" autofocus />
-                    </template>
-                </Column>
-                <Column field="block_id" header="Block ID" style="min-width: 120px">
-                    <template #body="{ data }">{{
-                        data.block_id || ""
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" autofocus />
-                    </template>
-                </Column>
-                <Column field="identifier" header="Identifier" style="min-width: 120px">
-                    <template #body="{ data }">{{
-                        data.identifier || ""
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" autofocus />
-                    </template>
-                </Column>
-                <Column field="product_landing_page" header="Product Landing Page" style="min-width: 170px">
-                    <template #body="{ data }">{{
-                        data.product_landing_page || ""
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" autofocus />
-                    </template>
-                </Column>
-                <Column field="creative_location" header="Creative Location" style="min-width: 150px">
-                    <template #body="{ data }">{{
-                        data.creative_location || ""
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" autofocus />
-                    </template>
-                </Column>
-                <Column field="landing_page" header="Landing Page" style="min-width: 130px">
-                    <template #body="{ data }">{{
-                        data.landing_page || ""
-                    }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" autofocus />
-                    </template>
-                </Column>
-                <Column field="note" header="Note" style="min-width: 150px">
-                    <template #body="{ data }">{{ data.note || "" }}</template>
-                    <template #editor="{ data, field }">
-                        <InputText v-model="data[field]" class="w-full" autofocus />
-                    </template>
-                </Column>
-
-                <!-- Frozen right -->
-                <Column header="Actions" frozen alignFrozen="right" style="min-width: 80px">
-                    <template #body="{ data }">
-                        <Button icon="pi pi-trash" severity="danger" text
-                            @click="confirmDelete(data.sku_featured_id)" />
-                    </template>
-                </Column>
-            </DataTable>
+            <div class="relative flex-1 min-h-0 mt-2 border border-gray-300 dark:border-zinc-700 rounded overflow-hidden"
+                :data-ag-theme-mode="isDark ? 'dark' : 'light'">
+                <AgGridVue style="position: absolute; width: 100%; height: 100%; left: 0; top: 0" :theme="gridTheme"
+                    :columnDefs="columnDefs" :rowData="sortedFeaturedSkus" :defaultColDef="defaultColDef"
+                    :getRowId="getRowId" :getRowClass="getRowClass" :loading="store.isLoading"
+                    :stopEditingWhenCellsLoseFocus="true" :singleClickEdit="false" :enterNavigatesVertically="true"
+                    :enterNavigatesVerticallyAfterEdit="true" :enableCellTextSelection="true" :ensureDomOrder="true"
+                    :localeText="{ noRowsToShow: 'No featured SKUs found.' }" @grid-ready="onGridReady"
+                    @cell-value-changed="onCellValueChanged" />
+            </div>
         </div>
 
         <Dialog v-model:visible="deleteDialogVisible" header="Confirm Deletion" modal :style="{ width: '400px' }">
@@ -286,7 +152,13 @@ import { useCategoryFeaturedSkusStore } from "@/js/stores/category_featured_skus
 import { useNetoStore } from "@/js/stores/neto_store.js";
 import { getCurrentInstance } from "vue";
 import BulkAddFeaturedSkusModal from "@/js/components/category_featured_skus/BulkAddFeaturedSkusModal.vue";
+import { AgGridVue } from "ag-grid-vue3";
+import { useAgGridTheme } from "@/js/composables/useAgGridTheme.js";
+import ExcelSetFilter from "@/js/components/utils/ExcelSetFilter.vue";
 const bulkModalVisible = ref(false);
+
+const { isDark, gridTheme } = useAgGridTheme();
+let gridApi = null;
 
 const stockSnapshot = ref({});
 
@@ -343,6 +215,7 @@ onMounted(() => {
 
     store.loadFeaturedSkus().then(() => {
         saveSnapshot(store.allFeaturedSkus); // Fill in any missing SKUs
+        gridApi?.refreshCells({ force: true });
         lastSynced.value = new Date();
     });
 
@@ -443,13 +316,13 @@ async function submit() {
     closeModal();
 }
 
-async function onCellEdit(event) {
-    const { data, newValue, field } = event;
+// AG Grid has already written the new value into the row; just persist it
+async function onCellValueChanged(event) {
+    const { data, newValue, oldValue, colDef } = event;
+    const field = colDef.field;
 
     if (!editableFields.includes(field)) return;
-    if (newValue === data[field]) return;
-
-    data[field] = newValue;
+    if (newValue === oldValue) return;
 
     await store.updateFeaturedSku(data.sku_featured_id, {
         [field]: newValue,
@@ -498,10 +371,142 @@ function stockRowClass(data) {
 
     return "";
 }
+
+// ---------------------------------------------------------------------------
+// Grid
+// ---------------------------------------------------------------------------
+const getRowId = (params) => String(params.data.sku_featured_id);
+const getRowClass = (params) => stockRowClass(params.data);
+
+function onGridReady(params) {
+    gridApi = params.api;
+}
+
+const num = (value) => Number(value) || 0;
+
+const moneyColumn = (key, headerName, width, { blankWhenEmpty = false } = {}) => ({
+    colId: key,
+    headerName,
+    valueGetter: (p) => {
+        const v = p.data?.[key];
+        if (blankWhenEmpty ? !v : v == null || v === "") return "";
+        return formatPrice(v);
+    },
+    comparator: (a, b, nodeA, nodeB) => num(nodeA.data?.[key]) - num(nodeB.data?.[key]),
+    width,
+});
+
+const signedMoney = (v) => (v > 0 ? "+" : "") + formatPrice(v);
+
+const textColumn = (field, headerName, width) => ({
+    colId: field,
+    field,
+    headerName,
+    width,
+    editable: true,
+});
+
+function deleteRenderer(params) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.title = "Delete";
+    btn.setAttribute("aria-label", "Delete featured SKU");
+    btn.className = "inline-flex h-8 w-8 items-center justify-center rounded-full text-white hover:bg-gray-100 dark:hover:bg-gray-800";
+    btn.innerHTML = '<i class="pi pi-trash"></i>';
+    btn.addEventListener("click", () => confirmDelete(params.data.sku_featured_id));
+    return btn;
+}
+
+const defaultColDef = {
+    sortable: true,
+    resizable: true,
+    filter: ExcelSetFilter,
+    floatingFilter: false,
+    minWidth: 90,
+    wrapHeaderText: true,
+    autoHeaderHeight: true,
+};
+
+const columnDefs = [
+    { colId: "sku", field: "sku", headerName: "SKU", pinned: "left", width: 150 },
+    moneyColumn("rrp", "RRP", 110),
+    moneyColumn("website_price", "Website Price", 130),
+    moneyColumn("special_price", "Special Price", 130, { blankWhenEmpty: true }),
+    {
+        colId: "price_change",
+        headerName: "Price Change",
+        valueGetter: (p) => {
+            const v = p.data?.price_change;
+            return v && v != 0 ? signedMoney(v) : "";
+        },
+        comparator: (a, b, nodeA, nodeB) => num(nodeA.data?.price_change) - num(nodeB.data?.price_change),
+        cellClass: (p) => (!p.value ? "" : num(p.data?.price_change) > 0 ? "text-green-600" : "text-red-500"),
+        width: 130,
+    },
+    {
+        colId: "qty",
+        headerName: `SOH as of ${today}`,
+        valueGetter: (p) => String(p.data?.qty ?? "0"),
+        comparator: (a, b, nodeA, nodeB) => num(nodeA.data?.qty) - num(nodeB.data?.qty),
+        cellClass: (p) => ((p.data?.qty ?? 0) <= 0 ? "text-red-500" : ""),
+        width: 150,
+    },
+    {
+        colId: "stock_deducted",
+        headerName: "Stock Deducted",
+        valueGetter: (p) => {
+            const d = getStockDeducted(p.data);
+            return d > 0 ? `\u2212${d}` : "";
+        },
+        comparator: (a, b, nodeA, nodeB) => num(getStockDeducted(nodeA.data)) - num(getStockDeducted(nodeB.data)),
+        cellClass: (p) => (p.value ? "text-red-500 font-medium" : ""),
+        width: 140,
+    },
+    {
+        colId: "stock_added",
+        headerName: "Stock Added",
+        valueGetter: (p) => {
+            const d = getStockDeducted(p.data);
+            return d < 0 ? `+${Math.abs(d)}` : "";
+        },
+        comparator: (a, b, nodeA, nodeB) => num(getStockDeducted(nodeB.data)) - num(getStockDeducted(nodeA.data)),
+        cellClass: (p) => (p.value ? "text-green-600 font-medium" : ""),
+        width: 140,
+    },
+    textColumn("category_name", "Category", 150),
+    textColumn("block_name", "Block", 130),
+    textColumn("website", "Website", 120),
+    textColumn("type", "Type", 100),
+    textColumn("block_id", "Block ID", 120),
+    textColumn("identifier", "Identifier", 120),
+    textColumn("product_landing_page", "Product Landing Page", 170),
+    textColumn("creative_location", "Creative Location", 150),
+    textColumn("landing_page", "Landing Page", 130),
+    textColumn("note", "Note", 150),
+    {
+        colId: "actions",
+        headerName: "Actions",
+        cellRenderer: deleteRenderer,
+        pinned: "right",
+        width: 90,
+        sortable: false,
+        filter: false,
+        resizable: false,
+    },
+];
 </script>
-<style scoped>
-.low-stock-row>td {
+<style>
+.cfs-wrapper .ag-row.low-stock-row {
     background-color: #ef4444 !important;
     color: white !important;
+}
+
+.cfs-wrapper .ag-row.low-stock-row .ag-cell {
+    color: white !important;
+}
+
+.cfs-wrapper .ag-cell {
+    display: flex;
+    align-items: center;
 }
 </style>
