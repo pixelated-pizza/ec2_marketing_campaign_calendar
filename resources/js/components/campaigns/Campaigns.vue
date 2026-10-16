@@ -1,8 +1,8 @@
 <template>
     <div class="flex flex-col bg-gray-100 dark:bg-gray-900">
         <div class="bg-white dark:bg-gray-800 mb-5 border-b border-gray-200 dark:border-gray-700">
-            <h4 class="text-sm text-gray-900 dark:text-white text-center tracking-wide drop-shadow-sm py-3">
-                Website Sales, Promotions, Marketplaces Campaigns
+            <h4 class="text-sm text-gray-900 dark:text-white text-left tracking-wide drop-shadow-sm py-3 p-4">
+                Weekly Calendar
             </h4>
 
             <div class="flex flex-wrap items-center gap-2 ml-5 pb-3">

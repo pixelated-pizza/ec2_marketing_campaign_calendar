@@ -109,6 +109,11 @@ const routes = [
                     import("@/js/components/category_featured_skus/CategoryFeaturedSkus.vue"),
             },
             {
+                path: "xlsx-imports",
+                name: "XlsxImports",
+                component: () => import("@/js/components/xlsx_imports/XlsxImports.vue"),
+            },
+            {
                 path: "campaign-calendar",
                 name: "CampaignCalendarMain",
                 component: () =>

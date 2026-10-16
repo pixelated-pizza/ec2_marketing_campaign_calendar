@@ -15,6 +15,7 @@ export const ROUTE_PERMISSIONS = {
     WebsiteSaleArchive: [ROLES.EDITOR, ROLES.ADMIN],
     KeyMarketingDates:  [ROLES.EDITOR, ROLES.ADMIN],
     CategoryFeaturedSkus:[ROLES.EDITOR, ROLES.ADMIN],
+    XlsxImports:        [ROLES.EDITOR, ROLES.ADMIN],
  
     Dashboard:     [ROLES.VIEWER, ROLES.EDITOR, ROLES.ADMIN],
     ResetPassword: [ROLES.VIEWER, ROLES.EDITOR, ROLES.ADMIN],

@@ -45,10 +45,13 @@ export function useCampaignUniver() {
     const form = ref(emptyForm());
     const errors = ref({ name: null, channel_id: null, start_date: null, end_date: null });
 
+
+    let univer = null;
     let univerAPI = null;
     let darkObserver = null;
     let renderTimer = null;
-    let clickLookup = {}; // "row:col" -> campaign / channel, rebuilt with each render
+    let clickLookup = {};
+
 
     function emptyForm() {
         return { name: "", channel_id: null, start_date: null, end_date: null, color: DEFAULT_COLOR };
@@ -150,15 +153,22 @@ export function useCampaignUniver() {
     // -----------------------------------------------------------------------
     const isDarkMode = () => document.documentElement.classList.contains("app-dark");
 
+
     function destroyUniver() {
-        try {
-            univerAPI?.dispose();
-        } catch (e) {
-            console.warn("Failed to dispose Univer", e);
-        }
+        const instance = univer;
+
+        univer = null;
         univerAPI = null;
-        if (univerContainer.value) univerContainer.value.innerHTML = "";
+
+        if (instance) {
+            try {
+                instance.dispose();
+            } catch (e) {
+                console.warn("Failed to dispose Univer:", e);
+            }
+        }
     }
+
 
     function renderSheet() {
         if (!univerContainer.value) return;
@@ -170,16 +180,16 @@ export function useCampaignUniver() {
             presets: [
                 UniverSheetsCorePreset({
                     container: univerContainer.value,
-                    // Hide the spreadsheet chrome so it reads as a calendar
-                    header: false,
-                    toolbar: false,
+                    header: true,
+                    toolbar: true,
                     formulaBar: false,
                     footer: false,
-                    contextMenu: false,
+                    contextMenu: true,
                 }),
             ],
         });
 
+        univer = created.univer;
         univerAPI = created.univerAPI;
         univerAPI.toggleDarkMode?.(isDarkMode());
 

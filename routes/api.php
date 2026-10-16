@@ -9,19 +9,19 @@ use App\Http\Controllers\CategoryChannelController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\WebsiteSaleDetailsController;
 use App\Http\Controllers\ArchivedPromotionController;
 use App\Http\Controllers\ArchivedWebsiteSaleController;
 use App\Http\Controllers\WebsitePromoController;
 use App\Http\Controllers\CategoryFeaturedSkusController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\WebsiteSaleDetailsImportController;
-use App\Http\Controllers\SheetSnapshotController;
-use App\Http\Controllers\WsdSheetController;
+
 
 use App\Http\Controllers\SheetMirrorController;
 
 use App\Http\Controllers\NETOProductController;
+use App\Http\Controllers\XlsxImportController;
+
+use App\Http\Controllers\WebsiteSaleDetailsSnapshotController;
 
 Route::get('/user', function (Request $request) {
 return $request->user();
@@ -152,4 +152,56 @@ Route::prefix('sheet-mirror/{key}')->group(function () {
 
 Route::post('/sheet-mirror/{key}/webhook', [SheetMirrorController::class, 'webhook']);
 
+// Excel (.xlsx) imports: upload -> pick sheet/header row -> import, then edit / delete rows
+Route::middleware('auth:sanctum')->prefix('xlsx-imports')->group(function () {
+    Route::get('/', [XlsxImportController::class, 'index']);
+    Route::post('/upload', [XlsxImportController::class, 'upload']);
+    Route::get('/upload/{token}/preview', [XlsxImportController::class, 'preview']);
+    Route::post('/', [XlsxImportController::class, 'store']);
 
+    Route::get('/{import}', [XlsxImportController::class, 'show'])->whereNumber('import');
+    Route::put('/{import}', [XlsxImportController::class, 'update'])->whereNumber('import');
+    Route::delete('/{import}', [XlsxImportController::class, 'destroy'])->whereNumber('import');
+
+    Route::post('/{import}/rows', [XlsxImportController::class, 'addRow'])->whereNumber('import');
+    Route::post('/{import}/rows/bulk-update', [XlsxImportController::class, 'bulkUpdate'])->whereNumber('import');
+    Route::post('/{import}/rows/bulk-delete', [XlsxImportController::class, 'bulkDelete'])->whereNumber('import');
+    Route::post('/{import}/sync', [XlsxImportController::class, 'sync'])->whereNumber('import');
+});
+
+Route::prefix('website-sale-details')->group(function () {
+    Route::get('/layout', [
+        WebsiteSaleDetailsSnapshotController::class,
+        'showLayout',
+    ]);
+
+    Route::put('/layout', [
+        WebsiteSaleDetailsSnapshotController::class,
+        'saveLayout',
+    ]);
+
+    Route::get('/snapshots', [
+        WebsiteSaleDetailsSnapshotController::class,
+        'indexSnapshots',
+    ]);
+
+    Route::post('/snapshots', [
+        WebsiteSaleDetailsSnapshotController::class,
+        'createSnapshot',
+    ]);
+
+    Route::get('/snapshots/{snapshot}', [
+        WebsiteSaleDetailsSnapshotController::class,
+        'showSnapshot',
+    ]);
+
+    Route::post('/snapshots/{snapshot}/restore', [
+        WebsiteSaleDetailsSnapshotController::class,
+        'restoreSnapshot',
+    ]);
+
+    Route::delete('/snapshots/{snapshot}', [
+        WebsiteSaleDetailsSnapshotController::class,
+        'deleteSnapshot',
+    ]);
+});

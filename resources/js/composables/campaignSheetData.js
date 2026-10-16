@@ -13,7 +13,7 @@ const MONTHS_LONG = ["January", "February", "March", "April", "May", "June", "Ju
 
 const FIRST_DAY_COL = 2; // A and B are the label columns
 const HEADER_ROWS = 4;
-const LANE_HEIGHT = 46;
+const LANE_HEIGHT = 60;
 const MAX_DAYS = 120;
 
 const COLORS = {
@@ -117,7 +117,7 @@ export function buildCampaignSheet({ campaigns, channels, range }) {
     const cellData = {};
     const mergeData = [];
     const rowData = {};
-    const columnData = { 0: { w: 120 }, 1: { w: 150 } };
+    const columnData = { 0: { w: 190 }, 1: { w: 170 } };
     // "row:col" -> what a click on that cell means (campaign to edit, channel to add to)
     const lookup = {};
 
@@ -177,73 +177,180 @@ export function buildCampaignSheet({ campaigns, channels, range }) {
     put(3, 0, { v: "SECTIONS", s: headerLabel });
     put(3, 1, { v: "SPECIFICS", s: headerLabel });
 
-    // ----- campaign rows ----------------------------------------------------
+
+    // ----- campaign rows grouped by section -------------------------------
     let row = HEADER_ROWS;
 
-    channels.forEach((ch, ci) => {
-        const items = campaigns
-            .filter((c) => String(c.channel_id) === String(ch.channel_id))
-            .map((c) => ({ c, s: parseDate(c.start_date), e: parseDate(c.end_date) }))
-            .filter((x) => x.s && x.e)
-            .map((x) => ({
-                ...x,
-                si: Math.max(0, dayDiff(rangeStart, x.s)), // clipped to the visible window
-                ei: Math.min(nDays - 1, dayDiff(rangeStart, x.e)),
-            }))
-            .filter((x) => x.ei >= 0 && x.si <= nDays - 1 && x.ei >= x.si)
-            .sort((a, b) => a.si - b.si || a.ei - b.ei);
+    // Display sections in this order. Unknown sections appear afterward.
+    const preferredSectionOrder = [
+        "Website Campaigns",
+        "Brand Sites: Valk, Equipmed, Baumr-AG, Medihub",
+        "eBay and Other Resellers",
+    ];
 
-        // Greedy lane packing so overlapping campaigns never share a row
-        const laneEnds = [];
-        const placed = items.map((x) => {
-            let lane = laneEnds.findIndex((end) => end < x.si);
-            if (lane === -1) {
-                lane = laneEnds.length;
-                laneEnds.push(x.ei);
-            } else {
-                laneEnds[lane] = x.ei;
-            }
-            return { ...x, lane };
-        });
+    // Group channels using the existing database section_name field.
+    const groupedChannels = new Map();
 
-        const laneCount = Math.max(1, laneEnds.length);
-        const firstRow = row;
-        for (let l = 0; l < laneCount; l++) rowData[firstRow + l] = { h: LANE_HEIGHT };
+    channels.forEach((ch) => {
+        const sectionName = ch.section_name || "Other";
 
-        placed.forEach(({ c, s, e, si, ei, lane }) => {
-            const bg = c.background_color || COLORS.defaultCampaign;
-            block(
-                firstRow + lane,
-                FIRST_DAY_COL + si,
-                firstRow + lane,
-                FIRST_DAY_COL + ei,
-                `${c.name}\n${fmtTime(s)} – ${fmtTime(e)}`,
-                cellStyle({ bg, color: textColorFor(bg), size: 9, line: "#FFFFFF" }),
-            );
-            for (let col = FIRST_DAY_COL + si; col <= FIRST_DAY_COL + ei; col++) {
-                lookup[`${firstRow + lane}:${col}`] = { type: "campaign", id: String(c.campaign_id) };
-            }
-        });
-
-        block(
-            firstRow,
-            1,
-            firstRow + laneCount - 1,
-            1,
-            ch.name,
-            cellStyle({ bg: COLORS.channels[ci % COLORS.channels.length], bold: 1 }),
-        );
-        for (let l = 0; l < laneCount; l++) {
-            lookup[`${firstRow + l}:1`] = { type: "channel", channelId: String(ch.channel_id) };
+        if (!groupedChannels.has(sectionName)) {
+            groupedChannels.set(sectionName, []);
         }
 
-        row += laneCount;
+        groupedChannels.get(sectionName).push(ch);
     });
 
-    // Column A spans every campaign row
-    if (row > HEADER_ROWS) {
-        block(HEADER_ROWS, 0, row - 1, 0, "Website Campaigns", cellStyle({ bg: COLORS.section, bold: 1 }));
-    }
+    const sortedSections = [...groupedChannels.entries()].sort(
+        ([sectionA], [sectionB]) => {
+            const indexA = preferredSectionOrder.indexOf(sectionA);
+            const indexB = preferredSectionOrder.indexOf(sectionB);
+
+            if (indexA !== -1 && indexB !== -1) {
+                return indexA - indexB;
+            }
+
+            if (indexA !== -1) return -1;
+            if (indexB !== -1) return 1;
+
+            return sectionA.localeCompare(sectionB);
+        }
+    );
+
+    let channelColorIndex = 0;
+
+    sortedSections.forEach(([sectionName, sectionChannels]) => {
+        const sectionStartRow = row;
+
+        // Sort specifics within each section using the database sort_order.
+        sectionChannels.sort(
+            (a, b) =>
+                Number(a.sort_order ?? 999999) -
+                Number(b.sort_order ?? 999999)
+        );
+
+        sectionChannels.forEach((ch) => {
+            const items = campaigns
+                .filter(
+                    (c) =>
+                        String(c.channel_id) === String(ch.channel_id)
+                )
+                .map((c) => ({
+                    c,
+                    s: parseDate(c.start_date),
+                    e: parseDate(c.end_date),
+                }))
+                .filter((x) => x.s && x.e)
+                .map((x) => ({
+                    ...x,
+                    si: Math.max(0, dayDiff(rangeStart, x.s)),
+                    ei: Math.min(nDays - 1, dayDiff(rangeStart, x.e)),
+                }))
+                .filter(
+                    (x) =>
+                        x.ei >= 0 &&
+                        x.si <= nDays - 1 &&
+                        x.ei >= x.si
+                )
+                .sort((a, b) => a.si - b.si || a.ei - b.ei);
+
+            // Keep overlapping campaigns on separate lanes.
+            const laneEnds = [];
+
+            const placed = items.map((x) => {
+                let lane = laneEnds.findIndex(
+                    (end) => end < x.si
+                );
+
+                if (lane === -1) {
+                    lane = laneEnds.length;
+                    laneEnds.push(x.ei);
+                } else {
+                    laneEnds[lane] = x.ei;
+                }
+
+                return { ...x, lane };
+            });
+
+            const laneCount = Math.max(1, laneEnds.length);
+            const firstRow = row;
+
+            for (let l = 0; l < laneCount; l++) {
+                rowData[firstRow + l] = { h: LANE_HEIGHT };
+            }
+
+            placed.forEach(({ c, s, e, si, ei, lane }) => {
+                const bg = c.background_color || COLORS.defaultCampaign;
+
+                block(
+                    firstRow + lane,
+                    FIRST_DAY_COL + si,
+                    firstRow + lane,
+                    FIRST_DAY_COL + ei,
+                    `${c.name}\n${fmtTime(s)} – ${fmtTime(e)}`,
+                    cellStyle({
+                        bg,
+                        color: textColorFor(bg),
+                        size: 9,
+                        line: "#FFFFFF",
+                    })
+                );
+
+                for (
+                    let col = FIRST_DAY_COL + si;
+                    col <= FIRST_DAY_COL + ei;
+                    col++
+                ) {
+                    lookup[`${firstRow + lane}:${col}`] = {
+                        type: "campaign",
+                        id: String(c.campaign_id),
+                    };
+                }
+            });
+
+            // Column B: merge the channel name across its lanes.
+            block(
+                firstRow,
+                1,
+                firstRow + laneCount - 1,
+                1,
+                ch.name,
+                cellStyle({
+                    bg: COLORS.channels[
+                        channelColorIndex % COLORS.channels.length
+                    ],
+                    bold: 1,
+                })
+            );
+
+            channelColorIndex++;
+
+            for (let l = 0; l < laneCount; l++) {
+                lookup[`${firstRow + l}:1`] = {
+                    type: "channel",
+                    channelId: String(ch.channel_id),
+                };
+            }
+
+            row += laneCount;
+        });
+
+        // Column A: merge only the rows belonging to this section.
+        if (row > sectionStartRow) {
+            block(
+                sectionStartRow,
+                0,
+                row - 1,
+                0,
+                sectionName,
+                cellStyle({
+                    bg: COLORS.section,
+                    bold: 1,
+                })
+            );
+        }
+    });
+
 
     const data = {
         id: "campaign-calendar",
