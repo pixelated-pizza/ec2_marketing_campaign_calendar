@@ -1,17 +1,9 @@
-// Builds Univer workbook data that looks like the "Weekly Calendar" sheet:
-//   rows 0-3  : month / week / day / weekday headers
-//   col A     : "Website Campaigns" (merged)
-//   col B     : channel names (merged per channel)
-//   col C...  : one column per day, campaigns are merged cells across their days
-//
-// Pure function: no Vue, no Univer imports, so it is easy to test.
-
 const DAY = 86400000;
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const MONTHS_LONG = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-const FIRST_DAY_COL = 2; // A and B are the label columns
+const FIRST_DAY_COL = 2; 
 const HEADER_ROWS = 4;
 const LANE_HEIGHT = 60;
 const MAX_DAYS = 120;
@@ -26,17 +18,15 @@ const COLORS = {
     defaultCampaign: "#60A5FA",
 };
 
-// ---------------------------------------------------------------------------
-// Date helpers
-// ---------------------------------------------------------------------------
+
 export function parseDate(v) {
     if (!v) return null;
     if (v instanceof Date) return v;
-    const d = new Date(String(v).replace(" ", "T")); // same result in every browser
+    const d = new Date(String(v).replace(" ", "T")); 
     return isNaN(d) ? null : d;
 }
 
-// Local date-time with seconds, so 11:59:00 PM is stored exactly as set
+
 export function formatDateTime(date) {
     const d = new Date(date);
     const p = (n) => String(n).padStart(2, "0");
@@ -46,8 +36,6 @@ export function formatDateTime(date) {
 const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const dayDiff = (a, b) => Math.round((startOfDay(b) - startOfDay(a)) / DAY);
 
-// Monday-based ISO week number. Your sheet's "Week 14" looks like a fiscal
-// week count, so swap this function if you need the same numbering.
 function weekNumber(d) {
     const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     const day = t.getUTCDay() || 7;
@@ -73,9 +61,6 @@ function textColorFor(hex) {
     return lum > 0.65 ? "#111827" : "#FFFFFF";
 }
 
-// ---------------------------------------------------------------------------
-// Styles (Univer IStyleData: ht 2 = center, vt 2 = middle, tb 3 = wrap, bl 1 = bold)
-// ---------------------------------------------------------------------------
 const border = (color = COLORS.line) => ({
     t: { s: 1, cl: { rgb: color } },
     b: { s: 1, cl: { rgb: color } },

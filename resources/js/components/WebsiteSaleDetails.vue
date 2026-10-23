@@ -25,19 +25,19 @@
                         @change="handleExcelSelected" />
                     <Button label="Import Excel" icon="pi pi-file-excel" size="small" outlined
                         @click="excelInput?.click()" />
-                    <input ref="csvInput" type="file" accept=".csv" class="hidden" @change="handleCsvSelected" />
-                    <Button label="Import CSV" icon="pi pi-upload" size="small" outlined @click="csvInput?.click()" />
-                    <Button label="Add row" icon="pi pi-plus" size="small" outlined @click="addRow" />
+                    <input ref="csvInput" type="file" accept=".csv" class="hidden" @change="handleCsvSelected" style="display: none;" />
+                    <Button label="Import CSV" icon="pi pi-upload" size="small" outlined @click="csvInput?.click()" style="display: none;"/>
+                    <Button label="Add row" icon="pi pi-plus" size="small" outlined @click="addRow" style="display: none;"/>
                     <Button label="Delete selected" icon="pi pi-trash" size="small" outlined severity="danger"
-                        @click="deleteSelected" />
+                        @click="deleteSelected" style="display: none;"/>
                     <Button label="Pull" icon="pi pi-download" size="small" outlined :loading="syncing"
-                        @click="pullNow" />
+                        @click="pullNow" style="display: none;"/>
                     <Button label="Push" icon="pi pi-upload" size="small" outlined :loading="pushing"
-                        @click="pushNow" />
+                        @click="pushNow" style="display: none;"/>
                 </div>
             </div>
 
-            <div
+            <div style="display: none;"
                 class="mb-2 flex items-center gap-2 flex-wrap bg-white dark:bg-zinc-900 p-2 rounded border border-gray-200 dark:border-zinc-700">
                 <input v-model="snapshotName" type="text" maxlength="160"
                     placeholder="Snapshot name (e.g. Before October changes)"
@@ -53,7 +53,6 @@
                 </select>
                 <Button label="Restore snapshot" icon="pi pi-history" size="small" outlined severity="secondary"
                     :disabled="!selectedSnapshotId" :loading="snapshotBusy" @click="restoreSnapshot" />
-                <span class="text-xs text-gray-500">Snapshots include the workbook layout and cell data.</span>
             </div>
 
             <div class="flex-1 min-h-0 border border-gray-300 dark:border-zinc-700 rounded overflow-hidden">
@@ -64,7 +63,7 @@
 </template>
 
 <script setup>
-import { ref, shallowRef, onMounted, onBeforeUnmount, getCurrentInstance, nextTick } from "vue";
+import { ref, onMounted, onBeforeUnmount, getCurrentInstance, nextTick } from "vue";
 import Button from "primevue/button";
 import Skeleton from "primevue/skeleton";
 import Papa from "papaparse";
@@ -75,6 +74,10 @@ import { createUniver, LocaleType, mergeLocales } from "@univerjs/presets";
 import { UniverSheetsCorePreset } from "@univerjs/preset-sheets-core";
 import UniverPresetSheetsCoreEnUS from "@univerjs/preset-sheets-core/locales/en-US";
 import "@univerjs/preset-sheets-core/lib/index.css";
+
+import { UniverSheetsHyperLinkPreset } from "@univerjs/preset-sheets-hyper-link";
+import UniverPresetSheetsHyperLinkEnUS from "@univerjs/preset-sheets-hyper-link/locales/en-US";
+import "@univerjs/preset-sheets-hyper-link/lib/index.css";
 
 const wsdStore = useWSDStore();
 const toastr = getCurrentInstance()?.appContext.config.globalProperties.$toastr;
@@ -107,6 +110,12 @@ const SNAPSHOTS_ENDPOINT = "/api/website-sale-details/snapshots";
 const DEFAULT_SHEET_ID = "website-sale-details";
 const DEFAULT_SHEET_NAME = "Website Sale Details";
 
+const BORDER_STYLE = {
+    thin: 1, hair: 2, dotted: 3, dashed: 4, dashDot: 5, dashDotDot: 6,
+    medium: 7, mediumDashed: 8, mediumDashDot: 9, mediumDashDotDot: 10,
+    slantDashDot: 11, thick: 12, double: 13,
+};
+
 function setSaveStatus(text, className = "text-gray-400") {
     saveStatusText.value = text;
     saveStatusClass.value = className;
@@ -118,6 +127,21 @@ function notify(kind, message) {
 }
 function safeDispose(disposable) {
     try { disposable?.dispose?.(); } catch (_) { /* already disposed */ }
+}
+
+function packWorkbook(data) {
+    return { __json: JSON.stringify(data) };
+}
+
+function unpackWorkbook(raw) {
+    if (!raw) return raw;
+    try {
+        if (typeof raw === "string") return JSON.parse(raw);
+        if (typeof raw.__json === "string") return JSON.parse(raw.__json);
+    } catch (error) {
+        console.error("[wsd-sheet] Could not parse stored workbook:", error);
+    }
+    return raw; // old layouts saved before this change
 }
 
 function createBasicWorkbookData(headers, rows) {
@@ -151,11 +175,7 @@ function getPrimarySheetData(data) {
     return id ? data?.sheets?.[id] : null;
 }
 
-function getCellValue(cell) {
-    if (!cell) return "";
-    if (cell.v !== undefined && cell.v !== null) return cell.v;
-    return cell.f ? `=${cell.f}` : "";
-}
+
 
 function extractHeadersRows(data) {
     const ws = getPrimarySheetData(data);
@@ -192,7 +212,7 @@ function replaceWorkbook(data) {
         workbook = univerAPI.createWorkbook(data);
         sheet = workbook.getActiveSheet();
     } finally {
-        // Let the initial render finish before change events can trigger a save.
+
         requestAnimationFrame(() => { internalUpdate = false; });
     }
 }
@@ -214,7 +234,7 @@ async function persistWorkbook({ saveRows = true } = {}) {
         if (!quickFilter.value.trim()) visibleCount.value = rows.length;
         else searchRows();
     }
-    await axios.put(LAYOUT_ENDPOINT, { workbook_data: data });
+    await axios.put(LAYOUT_ENDPOINT, { workbook_data: packWorkbook(data) });
     setSaveStatus("Saved", "text-green-600");
 }
 
@@ -243,12 +263,14 @@ function initializeUniver(data) {
     const result = createUniver({
         locale: LocaleType.EN_US,
         locales: {
-            [LocaleType.EN_US]: mergeLocales(UniverPresetSheetsCoreEnUS),
+            [LocaleType.EN_US]: mergeLocales(
+                UniverPresetSheetsCoreEnUS,
+                UniverPresetSheetsHyperLinkEnUS
+            ),
         },
         presets: [
-            UniverSheetsCorePreset({
-                container: univerContainer.value,
-            }),
+            UniverSheetsCorePreset({ container: univerContainer.value }),
+            UniverSheetsHyperLinkPreset(),
         ],
     });
 
@@ -266,17 +288,12 @@ function initializeUniver(data) {
         )
     );
 
-    // Commands such as column resizing and formatting should save
-    // the current workbook layout without rewriting the data mirror.
     eventDisposables.push(
         univerAPI.addEvent(
             univerAPI.Event.CommandExecuted,
             () => schedulePersist({ saveRows: false })
         )
     );
-
-    // Intentionally do not subscribe to SheetSkeletonChanged.
-    // It can fire for layout/rendering changes that don't need a save.
 
     setSaveStatus("Ready", "text-green-600");
 }
@@ -289,10 +306,18 @@ function excelColor(color) {
     return { rgb: `#${value.length === 8 ? value.slice(2) : value}` };
 }
 function excelBorderSide(side) {
-    if (!side || !side.style) return undefined;
-    const styleMap = { thin: 1, hair: 1, dotted: 1, dashed: 1, dashDot: 1, dashDotDot: 1, slantDashDot: 1, medium: 2, thick: 3, double: 3 };
-    return { s: styleMap[side.style] || 1, cl: excelColor(side.color) || { rgb: "#000000" } };
+    if (!side?.style) return undefined;
+    return { s: BORDER_STYLE[side.style] || 1, cl: excelColor(side.color) || { rgb: "#000000" } };
 }
+
+function getCellValue(cell) {
+    if (!cell) return "";
+    if (cell.v !== undefined && cell.v !== null) return cell.v;
+    const text = cell.p?.body?.dataStream;
+    if (typeof text === "string") return text.replace(/\r\n$/, "");
+    return cell.f ? `=${cell.f}` : "";
+}
+
 function excelCellStyle(cell) {
     const style = {};
     const font = cell.font || {};
@@ -311,57 +336,38 @@ function excelCellStyle(cell) {
     const vertical = { top: 1, middle: 2, bottom: 3, distributed: 3, justify: 3 };
     if (alignment.horizontal && horizontal[alignment.horizontal]) style.ht = horizontal[alignment.horizontal];
     if (alignment.vertical && vertical[alignment.vertical]) style.vt = vertical[alignment.vertical];
-    if (alignment.wrapText) style.tb = 2;
-    if (alignment.textRotation) style.tr = alignment.textRotation;
+    if (alignment.wrapText) style.tb = 3;                                   // was 2
+    if (typeof alignment.textRotation === "number" && alignment.textRotation) {
+        style.tr = { a: alignment.textRotation };                           // was a bare number
+    }
     const bd = {};
     if (border.top) bd.t = excelBorderSide(border.top);
     if (border.bottom) bd.b = excelBorderSide(border.bottom);
     if (border.left) bd.l = excelBorderSide(border.left);
     if (border.right) bd.r = excelBorderSide(border.right);
     if (Object.keys(bd).length) style.bd = bd;
-    if (cell.numFmt) style.n = cell.numFmt;
+    if (cell.numFmt && cell.numFmt !== "General") style.n = { pattern: cell.numFmt };  // was a string
     return Object.keys(style).length ? style : undefined;
 }
 
-function excelValue(cell) {
-    const value = cell.value;
-
+function plainValue(value) {
     if (value == null) return "";
+    if (value instanceof Date) return value.toISOString().slice(0, 10);
+    if (typeof value !== "object") return value;
 
-    if (value instanceof Date) {
-        return value.toISOString().slice(0, 10);
+    if (Array.isArray(value.richText)) return value.richText.map(p => p.text ?? "").join("");
+    if ("result" in value || value.formula || value.sharedFormula) return plainValue(value.result);
+    if (value.hyperlink || "text" in value) return plainValue(value.text ?? value.hyperlink);
+    if (value.error) return String(value.error);
+    return "";
+}
+
+function excelValue(cell) {
+    const v = plainValue(cell.value);
+    if (typeof v === "object") {
+        try { return cell.text ?? ""; } catch { return ""; }
     }
-
-    if (typeof value !== "object") {
-        return value;
-    }
-
-    if (Array.isArray(value.richText)) {
-        return value.richText.map(part => part.text ?? "").join("");
-    }
-
-    if (value.hyperlink) {
-        return value.text ?? value.hyperlink;
-    }
-
-    if ("result" in value) {
-        return value.result == null ? "" : String(value.result);
-    }
-
-    if (value.sharedFormula) {
-        return value.result == null ? "" : String(value.result);
-    }
-
-    if (typeof value.text === "string") {
-        return value.text;
-    }
-
-    if (value.error) {
-        return String(value.error);
-    }
-
-    console.warn("[Excel import] Unhandled cell value:", value);
-    return JSON.stringify(value);
+    return v;
 }
 
 function columnLetterToZeroBased(letters) {
@@ -378,13 +384,10 @@ function convertExcelWorksheet(worksheet, fileName) {
 
     for (let rowIndex = 1; rowIndex <= rowCount; rowIndex++) {
         const row = worksheet.getRow(rowIndex);
-        if (row.hidden) {
-            rowData[rowIndex - 1] = { hd: 1 };
-        } else if (row.height) {
-            rowData[rowIndex - 1] = {
-                h: row.height * 96 / 72
-            };
-        }
+        const rowInfo = {};
+        if (row.height) rowInfo.h = row.height * 96 / 72;
+        if (row.hidden) rowInfo.hd = 1;
+        if (Object.keys(rowInfo).length) rowData[rowIndex - 1] = rowInfo;
         const rowCells = {};
         for (let colIndex = 1; colIndex <= columnCount; colIndex++) {
             const cell = row.getCell(colIndex);
@@ -404,14 +407,27 @@ function convertExcelWorksheet(worksheet, fileName) {
             }
 
             const value = excelValue(cell);
-            const entry = value && typeof value === "object" && "v" in value
-                ? { v: value.v, ...(value.f ? { f: value.f } : {}) }
-                : { v: value };
-            const style = excelCellStyle(cell);
+            const url = excelLink(cell);
+            const raw = cell.value;
+            const richParts = raw && Array.isArray(raw.richText) ? raw.richText : null;
+            const text = typeof value === "string" ? value : "";
+            const multiline = /[\r\n]/.test(text);
+
+            const entry = {};
+            let style = excelCellStyle(cell);
+
+            if (text !== "" && (url || richParts || multiline)) {
+                entry.p = buildRichDoc(richParts || [{ text }], url);
+                if (multiline) style = { ...(style || {}), tb: 3 };   // keep wrapping on
+            } else {
+                entry.v = value;
+            }
             if (style) entry.s = style;
             rowCells[colIndex - 1] = entry;
         }
         if (Object.keys(rowCells).length) cellData[rowIndex - 1] = rowCells;
+
+
     }
 
     for (let colIndex = 1; colIndex <= columnCount; colIndex++) {
@@ -476,7 +492,7 @@ async function captureSnapshot(customName = "") {
         await axios.post(SNAPSHOTS_ENDPOINT, {
             name,
             source_filename: null,
-            workbook_data: data,
+            workbook_data: packWorkbook(data),
         });
         snapshotName.value = "";
         await loadSnapshotList();
@@ -495,7 +511,7 @@ async function restoreSnapshot() {
     try {
         await captureSnapshot(`Before restore ${new Date().toLocaleString()}`);
         const response = await axios.post(`${SNAPSHOTS_ENDPOINT}/${selectedSnapshotId.value}/restore`);
-        const data = response.data?.workbook_data ?? response.data?.data?.workbook_data;
+        const data = unpackWorkbook(response.data?.workbook_data ?? response.data?.data?.workbook_data); a
         if (!data) throw new Error("The server did not return workbook data.");
         replaceWorkbook(data);
         const { headers, rows } = extractHeadersRows(data);
@@ -504,7 +520,7 @@ async function restoreSnapshot() {
         wsdStore.rows = rows;
         totalCount.value = rows.length;
         visibleCount.value = rows.length;
-        await axios.put(LAYOUT_ENDPOINT, { workbook_data: data });
+        await axios.put(LAYOUT_ENDPOINT, { workbook_data: packWorkbook(data) });
         setSaveStatus("Snapshot restored", "text-green-600");
         notify("success", "Snapshot restored.");
     } catch (error) {
@@ -536,7 +552,7 @@ async function handleExcelSelected(event) {
         await wsdStore.saveSheet(headers, rows);
         wsdStore.headers = headers;
         wsdStore.rows = rows;
-        await axios.put(LAYOUT_ENDPOINT, { workbook_data: data });
+        await axios.put(LAYOUT_ENDPOINT, { workbook_data: packWorkbook(data) });
         totalCount.value = rows.length;
         visibleCount.value = rows.length;
         setSaveStatus("Excel imported", "text-green-600");
@@ -549,6 +565,65 @@ async function handleExcelSelected(event) {
     } finally {
         event.target.value = "";
     }
+}
+
+function excelLink(cell) {
+    const v = cell.value;
+    if (v && typeof v === "object") {
+        if (v.hyperlink) return v.hyperlink;
+        const formula = v.formula || v.sharedFormula;
+        const m = typeof formula === "string" && formula.match(/^\s*HYPERLINK\(\s*"([^"]+)"/i);
+        if (m) return m[1];
+    }
+    return null;
+}
+
+function runStyle(font = {}) {
+    const ts = {};
+    if (font.bold) ts.bl = 1;
+    if (font.italic) ts.it = 1;
+    if (font.underline) ts.ul = { s: 1 };
+    if (font.strike) ts.st = { s: 1 };
+    if (font.size) ts.fs = font.size;
+    if (font.name) ts.ff = font.name;
+    if (font.color) ts.cl = excelColor(font.color);
+    return ts;
+}
+
+// Builds a Univer rich-text doc: "\n" becomes a paragraph break ("\r"), runs keep per-part formatting.
+function buildRichDoc(parts, url = null) {
+    const norm = parts.map(p => ({ ...p, text: String(p.text ?? "").replace(/\r\n?/g, "\n") }));
+    const text = norm.map(p => p.text).join("");
+
+    const textRuns = [];
+    let offset = 0;
+    norm.forEach(p => {
+        const ts = p.font ? runStyle(p.font) : {};
+        if (p.text.length && Object.keys(ts).length) {
+            textRuns.push({ st: offset, ed: offset + p.text.length, ts });
+        }
+        offset += p.text.length;
+    });
+
+    const paragraphs = [];
+    for (let i = 0; i < text.length; i++) if (text[i] === "\n") paragraphs.push({ startIndex: i });
+    paragraphs.push({ startIndex: text.length });
+
+    const body = {
+        dataStream: `${text.replace(/\n/g, "\r")}\r\n`,
+        paragraphs,
+    };
+    if (textRuns.length) body.textRuns = textRuns;
+    if (url && text.length) {
+        body.customRanges = [{
+            startIndex: 0,
+            endIndex: text.length - 1,
+            rangeId: `link-${Math.random().toString(36).slice(2, 10)}`,
+            rangeType: 0,
+            properties: { url },
+        }];
+    }
+    return { id: "d", documentStyle: {}, body };
 }
 
 function searchRows() {
@@ -588,7 +663,7 @@ async function handleCsvSelected(event) {
                 await wsdStore.saveSheet(headers, rows);
                 wsdStore.headers = headers;
                 wsdStore.rows = rows;
-                await axios.put(LAYOUT_ENDPOINT, { workbook_data: data });
+                await axios.put(LAYOUT_ENDPOINT, { workbook_data: packWorkbook(data) });
                 totalCount.value = rows.length;
                 visibleCount.value = rows.length;
                 setSaveStatus("CSV imported", "text-green-600");
@@ -620,7 +695,7 @@ async function pullNow() {
         ws.cellData = cellData;
         ws.rowCount = Math.max(Number(ws.rowCount) || 0, rows.length + 1);
         replaceWorkbook(data);
-        await axios.put(LAYOUT_ENDPOINT, { workbook_data: data });
+        await axios.put(LAYOUT_ENDPOINT, { workbook_data: packWorkbook(data) });
         totalCount.value = rows.length;
         visibleCount.value = rows.length;
         setSaveStatus("Pulled data; retained local layout", "text-green-600");
@@ -664,9 +739,9 @@ onMounted(async () => {
 
     try {
         const response = await axios.get(LAYOUT_ENDPOINT);
-        const savedLayout =
-            response.data?.workbook_data ??
-            response.data?.data?.workbook_data;
+        const savedLayout = unpackWorkbook(
+            response.data?.workbook_data ?? response.data?.data?.workbook_data
+        );
 
         const initialData =
             savedLayout ??

@@ -22,6 +22,7 @@ use App\Http\Controllers\NETOProductController;
 use App\Http\Controllers\XlsxImportController;
 
 use App\Http\Controllers\WebsiteSaleDetailsSnapshotController;
+use App\Http\Controllers\WeeklyCalendarSnapshotController;
 
 Route::get('/user', function (Request $request) {
 return $request->user();
@@ -202,6 +203,43 @@ Route::prefix('website-sale-details')->group(function () {
 
     Route::delete('/snapshots/{snapshot}', [
         WebsiteSaleDetailsSnapshotController::class,
+        'deleteSnapshot',
+    ]);
+});
+
+Route::prefix('weekly-calendar')->group(function () {
+    Route::get('/layout', [
+        WeeklyCalendarSnapshotController::class,
+        'showLayout',
+    ]);
+
+    Route::put('/layout', [
+        WeeklyCalendarSnapshotController::class,
+        'saveLayout',
+    ]);
+
+    Route::get('/snapshots', [
+        WeeklyCalendarSnapshotController::class,
+        'indexSnapshots',
+    ]);
+
+    Route::post('/snapshots', [
+        WeeklyCalendarSnapshotController::class,
+        'createSnapshot',
+    ]);
+
+    Route::get('/snapshots/{snapshot}', [
+        WeeklyCalendarSnapshotController::class,
+        'showSnapshot',
+    ]);
+
+    Route::post('/snapshots/{snapshot}/restore', [
+        WeeklyCalendarSnapshotController::class,
+        'restoreSnapshot',
+    ]);
+
+    Route::delete('/snapshots/{snapshot}', [
+        WeeklyCalendarSnapshotController::class,
         'deleteSnapshot',
     ]);
 });

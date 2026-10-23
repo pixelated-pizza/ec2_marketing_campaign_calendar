@@ -119,6 +119,12 @@ const routes = [
                 component: () =>
                     import("@/js/components/dashboard/CampaignCalendarMain.vue"),
             },
+            {
+                path: "weekly-calendar",
+                name: "WeeklyCalendar",
+                component: () =>
+                    import("@/js/components/campaigns/WeeklyCalendar.vue"),
+            },
         ],
     },
 ];
